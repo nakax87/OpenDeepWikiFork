@@ -5,12 +5,16 @@
       - KOALAWIKI_REPOSITORIES=/repositories
       - TASK_MAX_SIZE_PER_USER=5 # 每个用户AI处理文档生成的最大数量
       - REPAIR_MERMAID=1 # 是否进行Mermaid修复，1修复，其余不修复
-      - CHAT_MODEL=DeepSeek-V3 # 必须要支持function的模型
+      - CHAT_MODEL=anthropic.claude-3-sonnet-20240229-v1:0 # 必须要支持function的模型
       - ANALYSIS_MODEL= # 分析模型，用于生成仓库目录结构，这个很重要，模型越强，生成的目录结构越好，为空则使用ChatModel
                         # 分析模型建议使用GPT-4.1  , CHAT模型可以用其他模型生成文档,以节省 token 开销
-      - CHAT_API_KEY= #您的APIkey
+      - CHAT_API_KEY=sample-bedrock-key #您的APIkey
+      - AWS_ACCESS_KEY_ID=sample-access-key
+      - AWS_SECRET_ACCESS_KEY=sample-secret-key
+      - AWS_REGION=us-east-1
       - LANGUAGE= # 设置生成语言默认为“中文”, 英文可以填写 English 或 英文
-      - ENDPOINT=https://api.token-ai.cn/v1
+      - ENDPOINT=https://bedrock-runtime.us-east-1.amazonaws.com
+      - MODEL_PROVIDER=Bedrock
       - DB_TYPE=sqlite
       - DB_CONNECTION_STRING=Data Source=/data/KoalaWiki.db
       - UPDATE_INTERVAL=5 # 仓库增量更新间隔，单位天

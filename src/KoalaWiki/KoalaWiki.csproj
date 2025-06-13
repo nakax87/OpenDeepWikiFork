@@ -32,6 +32,8 @@
         <PackageReference Include="Microsoft.SemanticKernel" Version="1.54.0" />
         <PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.54.0" />
         <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.54.0" />
+        <PackageReference Include="Microsoft.SemanticKernel.Connectors.Amazon" Version="1.54.0-alpha" />
+        <PackageReference Include="AWSSDK.BedrockRuntime" Version="4.0.0.8" />
         <PackageReference Include="ModelContextProtocol" Version="0.2.0-preview.2" />
         <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.2.0-preview.2" />
         <PackageReference Include="ModelContextProtocolServer.Sse" Version="0.0.1-preview-06" />

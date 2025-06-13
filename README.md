@@ -27,7 +27,7 @@ Feature list:
 - [x] Supports multiple code repositories (Github, Gitlab, Gitee, Gitea, etc.)
 - [x] Supports multiple programming languages (Python, Java, C#, JavaScript, etc.)
 - [x] Supports repository management, providing functions for adding, deleting, modifying, and querying repositories
-- [x] Supports multiple AI providers (OpenAI, AzureOpenAI, Anthropic, etc.)
+- [x] Supports multiple AI providers (OpenAI, AzureOpenAI, Anthropic, Amazon Bedrock, etc.)
 - [x] Supports multiple databases (SQLite, PostgreSQL, SqlServer, etc.)
 - [x] Supports multiple languages (Chinese, English, French, etc.)
 - [x] Supports uploading ZIP files, and uploading local files
@@ -92,7 +92,7 @@ services:
       - LANGUAGE= # Set the default language for generation as "Chinese"
       - ENDPOINT=https://Your Ollama's IP: Port/v1
       - DB_TYPE=sqlite
-      - MODEL_PROVIDER=OpenAI # Model provider, default is OpenAI, supports AzureOpenAI and Anthropic
+      - MODEL_PROVIDER=OpenAI # Model provider, default is OpenAI, supports AzureOpenAI, Anthropic and Bedrock
       - DB_CONNECTION_STRING=Data Source=/data/KoalaWiki.db
       - EnableSmartFilter=true # Whether intelligent filtering is enabled or not may affect how the AI can obtain the file directory of the repository
       - UPDATE_INTERVAL # Warehouse increment update interval, unit: days
@@ -118,7 +118,7 @@ services:
       - LANGUAGE= # Set the default language for generation as "Chinese"
       - ENDPOINT=https://api.token-ai.cn/v1
       - DB_TYPE=sqlite
-      - MODEL_PROVIDER=OpenAI # Model provider, default is OpenAI, supports AzureOpenAI and Anthropic
+      - MODEL_PROVIDER=OpenAI # Model provider, default is OpenAI, supports AzureOpenAI, Anthropic and Bedrock
       - DB_CONNECTION_STRING=Data Source=/data/KoalaWiki.db
       - EnableSmartFilter=true # Whether intelligent filtering is enabled or not may affect how the AI can obtain the file directory of the repository
       - UPDATE_INTERVAL # Warehouse increment update interval, unit: days
@@ -143,7 +143,7 @@ services:
       - LANGUAGE= # Set the default language for generation as "Chinese"
       - ENDPOINT=https://your-azure-address.openai.azure.com/
       - DB_TYPE=sqlite
-      - MODEL_PROVIDER=AzureOpenAI # Model provider, default is OpenAI, supports AzureOpenAI and Anthropic
+      - MODEL_PROVIDER=AzureOpenAI # Model provider, default is OpenAI, supports AzureOpenAI, Anthropic and Bedrock
       - DB_CONNECTION_STRING=Data Source=/data/KoalaWiki.db
       - EnableSmartFilter=true # Whether intelligent filtering is enabled or not may affect how the AI can obtain the file directory of the repository
       - UPDATE_INTERVAL # Warehouse increment update interval, unit: days
@@ -168,7 +168,35 @@ services:
       - LANGUAGE= # Set the default language for generation as "Chinese"
       - ENDPOINT=https://api.anthropic.com/
       - DB_TYPE=sqlite
-      - MODEL_PROVIDER=Anthropic # Model provider, default is OpenAI, supports AzureOpenAI and Anthropic
+      - MODEL_PROVIDER=Anthropic # Model provider, default is OpenAI, supports AzureOpenAI, Anthropic and Bedrock
+      - DB_CONNECTION_STRING=Data Source=/data/KoalaWiki.db
+      - EnableSmartFilter=true # Whether intelligent filtering is enabled or not may affect how the AI can obtain the file directory of the repository
+      - UPDATE_INTERVAL # Warehouse increment update interval, unit: days
+      - MAX_FILE_LIMIT=100 # The maximum limit for uploading files, in MB
+      - DEEP_RESEARCH_MODEL= # Conduct in-depth research on the model and use CHAT_MODEL for the empty
+      - ENABLE_INCREMENTAL_UPDATE=true # Whether to enable incremental updates
+      - ENABLE_CODED_DEPENDENCY_ANALYSIS=false # Whether to enable code dependency analysis,This might have an impact on the quality of the code.
+      - ENABLE_WAREHOUSE_FUNCTION_PROMPT_TASK=false # Whether to enable MCP Prompt generation or not.
+      - ENABLE_WAREHOUSE_DESCRIPTION_TASK=false # Whether to enable the generation of warehouse Description
+```
+
+Bedrock:
+```yaml
+services:
+  koalawiki:
+    environment:
+      - KOALAWIKI_REPOSITORIES=/repositories
+      - TASK_MAX_SIZE_PER_USER=5 # Maximum number of parallel document generation tasks per user by AI
+      - CHAT_MODEL=anthropic.claude-3-sonnet-20240229-v1:0 # Model must support functions
+      - ANALYSIS_MODEL= # Analysis model used for generating repository directory structure
+      - CHAT_API_KEY=sample-bedrock-key # Sample API key
+      - AWS_ACCESS_KEY_ID=sample-access-key
+      - AWS_SECRET_ACCESS_KEY=sample-secret-key
+      - AWS_REGION=us-east-1
+      - LANGUAGE= # Set the default language for generation as "Chinese"
+      - ENDPOINT=https://bedrock-runtime.us-east-1.amazonaws.com
+      - DB_TYPE=sqlite
+      - MODEL_PROVIDER=Bedrock # Model provider, default is OpenAI, supports AzureOpenAI, Anthropic and Bedrock
       - DB_CONNECTION_STRING=Data Source=/data/KoalaWiki.db
       - EnableSmartFilter=true # Whether intelligent filtering is enabled or not may affect how the AI can obtain the file directory of the repository
       - UPDATE_INTERVAL # Warehouse increment update interval, unit: days
@@ -283,7 +311,7 @@ graph TD
   - CHAT_API_KEY  Your API key
   - LANGUAGE  Change the language of the generated documents
   - DB_TYPE  Database type, default is sqlite
-  - MODEL_PROVIDER  Model provider, by default OpenAI, supports Azure, OpenAI and Anthropic
+  - MODEL_PROVIDER  Model provider, by default OpenAI, supports Azure, OpenAI, Anthropic and Bedrock
   - DB_CONNECTION_STRING  Database connection string
   - EnableSmartFilter Whether intelligent filtering is enabled or not may affect how the AI can obtain the file directory of the repository
   - UPDATE_INTERVAL Warehouse increment update interval, unit: days

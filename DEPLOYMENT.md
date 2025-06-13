@@ -46,7 +46,7 @@ tar -xzf koala-wiki-frontend.tar.gz
 - `CHAT_API_KEY`: AI模型的API密钥
 - `CHAT_MODEL`: AI模型名称 (如: DeepSeek-V3, gpt-4等)
 - `ENDPOINT`: AI服务端点 (如: https://api.openai.com/v1)
-- `MODEL_PROVIDER`: 模型提供商 (OpenAI/AzureOpenAI/Anthropic)
+- `MODEL_PROVIDER`: 模型提供商 (OpenAI/AzureOpenAI/Anthropic/Bedrock)
 
 #### 可选配置
 - `DB_TYPE`: 数据库类型 (默认: sqlite)

@@ -14,7 +14,7 @@ export CHAT_API_KEY=
 export LANGUAGE=
 export ENDPOINT=https://api.openai.com/v1
 export DB_TYPE=sqlite
-# 模型提供商，默认为OpenAI 支持AzureOpenAI和Anthropic
+# 模型提供商，默认为OpenAI 支持AzureOpenAI、Anthropic和Bedrock
 export MODEL_PROVIDER=OpenAI
 export DB_CONNECTION_STRING="Data Source=./KoalaWiki.db"
 # 是否启用智能过滤，这可能影响AI得到仓库的文件目录

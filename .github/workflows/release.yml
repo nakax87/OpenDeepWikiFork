@@ -115,7 +115,7 @@ jobs:
           - CHAT_API_KEY: AI模型的API密钥
           - CHAT_MODEL: 使用的AI模型名称  
           - ENDPOINT: AI服务端点地址
-          - MODEL_PROVIDER: 模型提供商
+          - MODEL_PROVIDER: 模型提供商(OpenAI/AzureOpenAI/Anthropic/Bedrock)
           
           ## 访问地址
           
@@ -281,7 +281,7 @@ jobs:
           - `CHAT_API_KEY`: AI模型的API密钥
           - `CHAT_MODEL`: 使用的AI模型名称
           - `ENDPOINT`: AI服务端点地址
-          - `MODEL_PROVIDER`: 模型提供商(OpenAI/AzureOpenAI/Anthropic)
+          - `MODEL_PROVIDER`: 模型提供商(OpenAI/AzureOpenAI/Anthropic/Bedrock)
           EOF
       
       - name: 创建Release

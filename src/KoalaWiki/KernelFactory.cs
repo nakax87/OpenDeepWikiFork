@@ -4,6 +4,7 @@ using KoalaWiki.Functions;
 using KoalaWiki.Options;
 using KoalaWiki.plugins;
 using Microsoft.SemanticKernel;
+using Amazon.BedrockRuntime;
 using OpenAI;
 using Serilog;
 
@@ -77,9 +78,18 @@ public static class KernelFactory
                 Timeout = TimeSpan.FromSeconds(16000),
             });
         }
+        else if (OpenAIOptions.ModelProvider.Equals("Bedrock", StringComparison.OrdinalIgnoreCase))
+        {
+            var bedrockRuntime = new AmazonBedrockRuntimeClient(new AmazonBedrockRuntimeConfig
+            {
+                ServiceURL = chatEndpoint
+            });
+
+            kernelBuilder.AddBedrockChatCompletionService(model, bedrockRuntime);
+        }
         else
         {
-            throw new Exception("暂不支持：" + OpenAIOptions.ModelProvider + "，请使用OpenAI、AzureOpenAI或Anthropic");
+            throw new Exception("暂不支持：" + OpenAIOptions.ModelProvider + "，请使用OpenAI、AzureOpenAI、Anthropic或Bedrock");
         }
 
         if (isCodeAnalysis)

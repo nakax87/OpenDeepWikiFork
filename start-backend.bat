@@ -12,7 +12,7 @@ REM 设置生成语言默认为"中文"
 SET LANGUAGE=
 SET ENDPOINT=https://api.openai.com/v1
 SET DB_TYPE=sqlite
-REM 模型提供商，默认为OpenAI 支持AzureOpenAI和Anthropic
+REM 模型提供商，默认为OpenAI 支持AzureOpenAI、Anthropic和Bedrock
 SET MODEL_PROVIDER=OpenAI
 SET DB_CONNECTION_STRING=Data Source=./KoalaWiki.db
 REM 是否启用智能过滤，这可能影响AI得到仓库的文件目录
