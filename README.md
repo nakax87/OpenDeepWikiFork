@@ -27,7 +27,7 @@ Feature list:
 - [x] Supports multiple code repositories (Github, Gitlab, Gitee, Gitea, etc.)
 - [x] Supports multiple programming languages (Python, Java, C#, JavaScript, etc.)
 - [x] Supports repository management, providing functions for adding, deleting, modifying, and querying repositories
-- [x] Supports multiple AI providers (OpenAI, AzureOpenAI, Anthropic, etc.)
+- [x] Supports multiple AI providers (OpenAI, AzureOpenAI, Anthropic, Amazon Bedrock, etc.)
 - [x] Supports multiple databases (SQLite, PostgreSQL, SqlServer, etc.)
 - [x] Supports multiple languages (Chinese, English, French, etc.)
 - [x] Supports uploading ZIP files, and uploading local files
