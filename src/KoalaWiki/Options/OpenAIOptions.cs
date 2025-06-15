@@ -44,6 +44,21 @@ public class OpenAIOptions
     /// 嵌入模型
     /// </summary>
     public static string EmbeddingsModel { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// AWSリージョン
+    /// </summary>
+    public static string AwsRegion { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// AWSアクセスキーID
+    /// </summary>
+    public static string AwsAccessKeyId { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// AWSシークレットアクセスキー
+    /// </summary>
+    public static string AwsSecretAccessKey { get; set; } = string.Empty;
 
     public static void InitConfig(IConfiguration configuration)
     {
@@ -67,6 +82,15 @@ public class OpenAIOptions
 
         EmbeddingsModel = (configuration.GetValue<string>("EMBEDDINGS_MODEL") ??
                            configuration.GetValue<string>("EmbeddingsModel")).GetTrimmedValueOrEmpty();
+        
+        AwsRegion = (configuration.GetValue<string>("AWS_REGION") ??
+                     configuration.GetValue<string>("AwsRegion")).GetTrimmedValueOrEmpty();
+        
+        AwsAccessKeyId = (configuration.GetValue<string>("AWS_ACCESS_KEY_ID") ??
+                          configuration.GetValue<string>("AwsAccessKeyId")).GetTrimmedValueOrEmpty();
+        
+        AwsSecretAccessKey = (configuration.GetValue<string>("AWS_SECRET_ACCESS_KEY") ??
+                              configuration.GetValue<string>("AwsSecretAccessKey")).GetTrimmedValueOrEmpty();
 
         // EnableIncrementalUpdate
         var enableIncrementalUpdate = configuration.GetValue<bool>("ENABLE_INCREMENTAL_UPDATE");

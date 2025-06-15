@@ -1,15 +1,10 @@
-﻿using System.ClientModel;
-using System.Collections.Concurrent;
-using KoalaWiki.Functions;
+﻿using KoalaWiki.Functions;
 using KoalaWiki.Options;
 using KoalaWiki.plugins;
 using Microsoft.SemanticKernel;
-using OpenAI;
 using Serilog;
-
-#pragma warning disable SKEXP0070
-
-#pragma warning disable SKEXP0010
+using Amazon.BedrockRuntime;
+using Amazon;
 
 namespace KoalaWiki;
 
@@ -77,9 +72,22 @@ public static class KernelFactory
                 Timeout = TimeSpan.FromSeconds(16000),
             });
         }
+        else if (OpenAIOptions.ModelProvider.Equals("AmazonBedrock", StringComparison.OrdinalIgnoreCase))
+        {
+            // AWS Bedrockリージョンの設定
+            var awsRegion = RegionEndpoint.GetBySystemName(OpenAIOptions.AwsRegion);
+            // AWS Bedrockクライアントの作成
+            var bedrockClient = new AmazonBedrockRuntimeClient(
+                OpenAIOptions.AwsAccessKeyId,
+                OpenAIOptions.AwsSecretAccessKey,
+                awsRegion);
+            
+            // Amazon Bedrock ChatCompletionをカーネルに追加
+            kernelBuilder.AddAmazonBedrockChatCompletion(model, bedrockClient);
+        }
         else
         {
-            throw new Exception("暂不支持：" + OpenAIOptions.ModelProvider + "，请使用OpenAI、AzureOpenAI或Anthropic");
+            throw new Exception("暂不支持：" + OpenAIOptions.ModelProvider + "，请使用OpenAI、AzureOpenAI、Anthropic或AmazonBedrock");
         }
 
         if (isCodeAnalysis)
