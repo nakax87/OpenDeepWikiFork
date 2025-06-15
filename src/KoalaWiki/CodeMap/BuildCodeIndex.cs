@@ -15,7 +15,7 @@ public class BuildCodeIndex(IServiceProvider service) : BackgroundService
 
         if (string.IsNullOrWhiteSpace(OpenAIOptions.EmbeddingsModel))
         {
-            Log.Logger.Error("没有设置OpenAI的EmbeddingsModel");
+            Log.Logger.Error("没有設定EmbeddingsModel");
             return;
         }
 

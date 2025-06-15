@@ -53,8 +53,8 @@ public class ChatService(IKoalaWikiContext koala, IUserContext userContext) : Fa
         // 解析仓库的目录结构
         var path = document.GitPath;
 
-        var fileKernel = KernelFactory.GetKernel(OpenAIOptions.Endpoint,
-            OpenAIOptions.ChatApiKey, path, OpenAIOptions.ChatModel, false);
+        var fileKernel = KernelFactory.GetKernel(OpenAIOptions.GetEffectiveEndpoint(),
+            OpenAIOptions.GetEffectiveApiKey(), path, OpenAIOptions.ChatModel, false);
 
         if (!string.IsNullOrWhiteSpace(OpenAIOptions.EmbeddingsModel))
         {
@@ -134,8 +134,8 @@ public class ChatService(IKoalaWikiContext koala, IUserContext userContext) : Fa
 
                 await koala.SaveChangesAsync();
 
-                var kernel = KernelFactory.GetKernel(OpenAIOptions.Endpoint,
-                    OpenAIOptions.ChatApiKey, document.GitPath, OpenAIOptions.DeepResearchModel, false);
+                var kernel = KernelFactory.GetKernel(OpenAIOptions.GetEffectiveEndpoint(),
+                    OpenAIOptions.GetEffectiveApiKey(), document.GitPath, OpenAIOptions.DeepResearchModel, false);
 
                 var chat = kernel.GetRequiredService<IChatCompletionService>();
 
@@ -285,8 +285,8 @@ public class ChatService(IKoalaWikiContext koala, IUserContext userContext) : Fa
 
                 await koala.SaveChangesAsync();
 
-                var kernel = KernelFactory.GetKernel(OpenAIOptions.Endpoint,
-                    OpenAIOptions.ChatApiKey, document.GitPath, OpenAIOptions.ChatModel, false);
+                var kernel = KernelFactory.GetKernel(OpenAIOptions.GetEffectiveEndpoint(),
+                    OpenAIOptions.GetEffectiveApiKey(), document.GitPath, OpenAIOptions.ChatModel, false);
 
                 var chat = kernel.GetRequiredService<IChatCompletionService>();
 

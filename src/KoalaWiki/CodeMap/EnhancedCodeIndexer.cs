@@ -7,6 +7,7 @@ using Microsoft.KernelMemory.FileSystem.DevTools;
 using Microsoft.KernelMemory.MemoryStorage.DevTools;
 using Newtonsoft.Json;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
+using KoalaWiki.Options;
 
 #pragma warning disable SKEXP0010
 
@@ -24,11 +25,11 @@ public class EnhancedCodeIndexer
     {
         _logger = NullLogger<EnhancedCodeIndexer>.Instance;
 
-
+        // Amazon Bedrock対応: プロバイダーに関係なく設定を構築
         _openAIConfig = new OpenAIConfig()
         {
-            APIKey = OpenAIOptions.ChatApiKey,
-            Endpoint = OpenAIOptions.Endpoint,
+            APIKey = OpenAIOptions.GetEffectiveApiKey(),
+            Endpoint = OpenAIOptions.GetEffectiveEndpoint(),
             TextModel = OpenAIOptions.ChatModel,
             EmbeddingModel = OpenAIOptions.EmbeddingsModel,
             TextGenerationType = OpenAIConfig.TextGenerationTypes.TextCompletion,

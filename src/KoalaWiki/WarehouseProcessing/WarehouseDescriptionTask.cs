@@ -46,8 +46,8 @@ public partial class WarehouseDescriptionTask(ILogger<WarehouseDescriptionTask> 
                     .Where(x => x.WarehouseId == warehouses.Id)
                     .FirstOrDefaultAsync(stoppingToken);
 
-                var kernel = KernelFactory.GetKernel(OpenAIOptions.Endpoint,
-                    OpenAIOptions.ChatApiKey, documents.GitPath, OpenAIOptions.ChatModel);
+                var kernel = KernelFactory.GetKernel(OpenAIOptions.GetEffectiveEndpoint(),
+                    OpenAIOptions.GetEffectiveApiKey(), documents.GitPath, OpenAIOptions.ChatModel);
 
                 if (string.IsNullOrEmpty(warehouses.Readme))
                 {

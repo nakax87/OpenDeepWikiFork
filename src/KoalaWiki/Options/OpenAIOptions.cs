@@ -138,4 +138,22 @@ public class OpenAIOptions
             throw new Exception($"{parameterName} is empty");
         }
     }
+
+    /// <summary>
+    /// Amazon Bedrock使用時に適切なエンドポイントを取得
+    /// </summary>
+    public static string GetEffectiveEndpoint()
+    {
+        return ModelProvider.Equals("AmazonBedrock", StringComparison.OrdinalIgnoreCase) 
+            ? "https://dummy-endpoint.com" : Endpoint;
+    }
+
+    /// <summary>
+    /// Amazon Bedrock使用時に適切なAPIキーを取得
+    /// </summary>
+    public static string GetEffectiveApiKey()
+    {
+        return ModelProvider.Equals("AmazonBedrock", StringComparison.OrdinalIgnoreCase) 
+            ? "dummy-key" : ChatApiKey;
+    }
 }

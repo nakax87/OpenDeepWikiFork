@@ -34,7 +34,7 @@ public partial class WarehouseProcessingTask
             .ThenBy(x => x.Committer.When)
             .ToList();
 
-        var kernel = KernelFactory.GetKernel(OpenAIOptions.Endpoint, OpenAIOptions.ChatApiKey, gitPath,
+        var kernel = KernelFactory.GetKernel(OpenAIOptions.GetEffectiveEndpoint(), OpenAIOptions.GetEffectiveApiKey(), gitPath,
             OpenAIOptions.ChatModel);
 
         string commitMessage = string.Empty;

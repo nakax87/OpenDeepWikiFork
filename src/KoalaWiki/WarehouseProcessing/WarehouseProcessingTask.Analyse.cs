@@ -181,7 +181,7 @@ public partial class WarehouseProcessingTask
                 }
             }
 
-            var fileKernel = KernelFactory.GetKernel(OpenAIOptions.Endpoint, OpenAIOptions.ChatApiKey, document.GitPath,
+            var fileKernel = KernelFactory.GetKernel(OpenAIOptions.GetEffectiveEndpoint(), OpenAIOptions.GetEffectiveApiKey(), document.GitPath,
                 OpenAIOptions.ChatModel, false);
 
             foreach (var valueTuple in documents)
