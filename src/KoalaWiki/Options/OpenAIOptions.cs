@@ -102,42 +102,21 @@ public class OpenAIOptions
         }
 
         // 检查参数
-        if (string.IsNullOrEmpty(ChatModel))
-        {
-            throw new Exception("ChatModel is empty");
-        }
+        ValidateRequiredParameter(ChatModel, "ChatModel");
 
-        // Amazon Bedrock以外のプロバイダーではChatApiKeyとEndpointが必須
-        if (!ModelProvider.Equals("AmazonBedrock", StringComparison.OrdinalIgnoreCase))
-        {
-            if (string.IsNullOrEmpty(ChatApiKey))
-            {
-                throw new Exception("ChatApiKey is empty");
-            }
-
-            if (string.IsNullOrEmpty(Endpoint))
-            {
-                throw new Exception("Endpoint is empty");
-            }
-        }
+        // プロバイダー別の必須パラメータ検証
+        var isAmazonBedrock = ModelProvider.Equals("AmazonBedrock", StringComparison.OrdinalIgnoreCase);
         
-        // Amazon BedrockプロバイダーではAWS認証情報が必須
-        if (ModelProvider.Equals("AmazonBedrock", StringComparison.OrdinalIgnoreCase))
+        if (isAmazonBedrock)
         {
-            if (string.IsNullOrEmpty(AwsRegion))
-            {
-                throw new Exception("AWS_REGION is required for Amazon Bedrock");
-            }
-            
-            if (string.IsNullOrEmpty(AwsAccessKeyId))
-            {
-                throw new Exception("AWS_ACCESS_KEY_ID is required for Amazon Bedrock");
-            }
-            
-            if (string.IsNullOrEmpty(AwsSecretAccessKey))
-            {
-                throw new Exception("AWS_SECRET_ACCESS_KEY is required for Amazon Bedrock");
-            }
+            ValidateRequiredParameter(AwsRegion, "AWS_REGION");
+            ValidateRequiredParameter(AwsAccessKeyId, "AWS_ACCESS_KEY_ID");
+            ValidateRequiredParameter(AwsSecretAccessKey, "AWS_SECRET_ACCESS_KEY");
+        }
+        else
+        {
+            ValidateRequiredParameter(ChatApiKey, "ChatApiKey");
+            ValidateRequiredParameter(Endpoint, "Endpoint");
         }
 
         if (string.IsNullOrEmpty(DeepResearchModel))
@@ -149,6 +128,14 @@ public class OpenAIOptions
         if (string.IsNullOrEmpty(AnalysisModel))
         {
             AnalysisModel = ChatModel;
+        }
+    }
+
+    private static void ValidateRequiredParameter(string value, string parameterName)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            throw new Exception($"{parameterName} is empty");
         }
     }
 }
