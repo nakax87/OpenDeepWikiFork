@@ -107,14 +107,37 @@ public class OpenAIOptions
             throw new Exception("ChatModel is empty");
         }
 
-        if (string.IsNullOrEmpty(ChatApiKey))
+        // Amazon Bedrock以外のプロバイダーではChatApiKeyとEndpointが必須
+        if (!ModelProvider.Equals("AmazonBedrock", StringComparison.OrdinalIgnoreCase))
         {
-            throw new Exception("ChatApiKey is empty");
-        }
+            if (string.IsNullOrEmpty(ChatApiKey))
+            {
+                throw new Exception("ChatApiKey is empty");
+            }
 
-        if (string.IsNullOrEmpty(Endpoint))
+            if (string.IsNullOrEmpty(Endpoint))
+            {
+                throw new Exception("Endpoint is empty");
+            }
+        }
+        
+        // Amazon BedrockプロバイダーではAWS認証情報が必須
+        if (ModelProvider.Equals("AmazonBedrock", StringComparison.OrdinalIgnoreCase))
         {
-            throw new Exception("Endpoint is empty");
+            if (string.IsNullOrEmpty(AwsRegion))
+            {
+                throw new Exception("AWS_REGION is required for Amazon Bedrock");
+            }
+            
+            if (string.IsNullOrEmpty(AwsAccessKeyId))
+            {
+                throw new Exception("AWS_ACCESS_KEY_ID is required for Amazon Bedrock");
+            }
+            
+            if (string.IsNullOrEmpty(AwsSecretAccessKey))
+            {
+                throw new Exception("AWS_SECRET_ACCESS_KEY is required for Amazon Bedrock");
+            }
         }
 
         if (string.IsNullOrEmpty(DeepResearchModel))
