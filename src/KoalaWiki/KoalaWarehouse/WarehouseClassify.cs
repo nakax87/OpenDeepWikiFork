@@ -7,6 +7,7 @@ using Microsoft.SemanticKernel;
 using KoalaWiki.Utilities;
 using Newtonsoft.Json;
 using OpenAI.Chat;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace KoalaWiki.KoalaWarehouse;
 

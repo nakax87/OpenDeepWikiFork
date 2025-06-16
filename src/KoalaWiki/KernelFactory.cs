@@ -6,6 +6,11 @@ using Serilog;
 using Amazon.BedrockRuntime;
 using Amazon;
 
+#pragma warning disable SKEXP0070
+#pragma warning disable SKEXP0010
+ 
+ 
+
 namespace KoalaWiki;
 
 /// <summary>
@@ -26,7 +31,7 @@ public static class KernelFactory
         kernelBuilder.Services.AddSerilog(Log.Logger);
 
         kernelBuilder.Services.AddSingleton<IPromptRenderFilter, LanguagePromptFilter>();
-        
+
         if (OpenAIOptions.ModelProvider.Equals("OpenAI", StringComparison.OrdinalIgnoreCase))
         {
             kernelBuilder.AddOpenAIChatCompletion(model, new Uri(chatEndpoint), apiKey,
@@ -81,9 +86,9 @@ public static class KernelFactory
                 OpenAIOptions.AwsAccessKeyId,
                 OpenAIOptions.AwsSecretAccessKey,
                 awsRegion);
-            
+
             // Amazon Bedrock ChatCompletionをカーネルに追加
-            kernelBuilder.AddAmazonBedrockChatCompletion(model, bedrockClient);
+            kernelBuilder.AddBedrockChatCompletionService(model, bedrockClient);
         }
         else
         {
