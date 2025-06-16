@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using KoalaWiki.Utilities;
 
 #pragma warning disable SKEXP0001
 
@@ -302,12 +302,7 @@ public class FineTuningService(IKoalaWikiContext koala, IUserContext userContext
             var sb = new StringBuilder();
 
             await foreach (var item in chat.GetStreamingChatMessageContentsAsync(history,
-                               new OpenAIPromptExecutionSettings()
-                               {
-                                   MaxTokens = DocumentsService.GetMaxTokens(dataset.Model),
-                                   ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                                   Temperature = 0.3,
-                               }, kernel))
+                               ExecutionSettingsFactory.CreateSettings(dataset.Model, temperature: 0.3, enableToolCalls: true), kernel))
             {
                 if (first)
                 {

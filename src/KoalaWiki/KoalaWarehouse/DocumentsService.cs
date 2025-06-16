@@ -11,7 +11,7 @@ using KoalaWiki.KoalaWarehouse.Overview;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using KoalaWiki.Utilities;
 
 namespace KoalaWiki.KoalaWarehouse;
 
@@ -127,10 +127,7 @@ public partial class DocumentsService
             try
             {
                 await foreach (var item in analysisModel.InvokeStreamingAsync(codeDirSimplifier, new KernelArguments(
-                                   new OpenAIPromptExecutionSettings()
-                                   {
-                                       MaxTokens = GetMaxTokens(OpenAIOptions.AnalysisModel)
-                                   })
+                                   ExecutionSettingsFactory.CreateSettings(OpenAIOptions.AnalysisModel))
                                {
                                    ["code_files"] = catalogue.ToString(),
                                    ["readme"] = readme
@@ -210,11 +207,7 @@ public partial class DocumentsService
             // 生成README
             var generateReadmePlugin = kernel.Plugins["CodeAnalysis"]["GenerateReadme"];
             var generateReadme = await fileKernel.InvokeAsync(generateReadmePlugin, new KernelArguments(
-                new OpenAIPromptExecutionSettings()
-                {
-                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                    Temperature = 0.5,
-                })
+                ExecutionSettingsFactory.CreateSettings(OpenAIOptions.ChatModel, temperature: 0.5, enableToolCalls: true))
             {
                 ["catalogue"] = catalogue,
                 ["git_repository"] = warehouse.Address.Replace(".git", ""),
@@ -389,48 +382,6 @@ public partial class DocumentsService
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int? GetMaxTokens(string model)
-    {
-        if (model.StartsWith("deepseek-r1"))
-        {
-            return 32768;
-        }
-
-        if (model.StartsWith("DeepSeek-R1"))
-        {
-            return 32768;
-        }
-
-        if (model.StartsWith("o"))
-        {
-            return 65535;
-        }
-
-        return model switch
-        {
-            "deepseek-chat" => 8192,
-            "DeepSeek-V3" => 16384,
-            "QwQ-32B" => 8192,
-            "gpt-4.1-mini" => 32768,
-            "gpt-4.1" => 32768,
-            "gpt-4o" => 16384,
-            "o4-mini" => 32768,
-            "doubao-1-5-pro-256k-250115" => 12288,
-            "o3-mini" => 32768,
-            "Qwen/Qwen3-235B-A22B" => null,
-            "grok-3" => 65536,
-            "qwen2.5-coder-3b-instruct" => 65535,
-            "qwen3-235b-a22b" => 65535,
-            "claude-sonnet-4-20250514" => 63999,
-            "gemini-2.5-pro-preview-05-06" => 32768,
-            "gemini-2.5-flash-preview-04-17" => 32768,
-            "Qwen3-32B" => 32768,
-            "deepseek-r1" => 32768,
-            "deepseek-r1:32b-qwen-distill-fp16" => 32768,
-            _ => null
-        };
-    }
 
     private static void ProcessCatalogueItems(List<DocumentResultCatalogueItem> items, string? parentId,
         Warehouse warehouse,

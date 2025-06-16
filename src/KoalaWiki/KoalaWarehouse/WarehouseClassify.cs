@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using KoalaWiki.Domains;
 using KoalaWiki.Prompts;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using KoalaWiki.Utilities;
 using Newtonsoft.Json;
 using OpenAI.Chat;
 
@@ -18,10 +18,7 @@ public class WarehouseClassify
     public static async Task<ClassifyType?> ClassifyAsync(Kernel kernel, string catalog, string readme)
     {
         var prompt = await PromptContext.Warehouse(nameof(PromptConstant.Warehouse.RepositoryClassification),
-            new KernelArguments(new OpenAIPromptExecutionSettings()
-            {
-                MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.ChatModel)
-            })
+            new KernelArguments(ExecutionSettingsFactory.CreateSettings(OpenAIOptions.ChatModel))
             {
                 ["category"] = catalog,
                 ["readme"] = readme

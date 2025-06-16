@@ -11,7 +11,7 @@ using KoalaWiki.Prompts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using KoalaWiki.Utilities;
 using OpenAI.Chat;
 
 #pragma warning disable SKEXP0001
@@ -145,12 +145,7 @@ public class ChatService(IKoalaWikiContext koala, IUserContext userContext) : Fa
                 context.Response.Headers.CacheControl = "no-cache";
 
                 await foreach (var chatItem in chat.GetStreamingChatMessageContentsAsync(history,
-                                   new OpenAIPromptExecutionSettings()
-                                   {
-                                       ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                                       MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.ChatModel),
-                                       Temperature = 0.5,
-                                   }, fileKernel))
+                                   ExecutionSettingsFactory.CreateSettings(OpenAIOptions.ChatModel, temperature: 0.5, enableToolCalls: true), fileKernel))
                 {
                     // 发送数据
                     if (chatItem.InnerContent is not StreamingChatCompletionUpdate message) continue;
@@ -295,12 +290,7 @@ public class ChatService(IKoalaWikiContext koala, IUserContext userContext) : Fa
                 context.Response.Headers.CacheControl = "no-cache";
 
                 await foreach (var chatItem in chat.GetStreamingChatMessageContentsAsync(history,
-                                   new OpenAIPromptExecutionSettings()
-                                   {
-                                       ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                                       MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.ChatModel),
-                                       Temperature = 0.5,
-                                   }, fileKernel))
+                                   ExecutionSettingsFactory.CreateSettings(OpenAIOptions.ChatModel, temperature: 0.5, enableToolCalls: true), fileKernel))
                 {
                     // 发送数据
                     if (chatItem.InnerContent is not StreamingChatCompletionUpdate message) continue;

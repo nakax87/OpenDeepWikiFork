@@ -7,7 +7,7 @@ using KoalaWiki.KoalaWarehouse.DocumentPending;
 using LibGit2Sharp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using KoalaWiki.Utilities;
 using Newtonsoft.Json;
 using Polly;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -116,11 +116,7 @@ public partial class WarehouseProcessingTask
                 st.Clear();
 
                 await foreach (var item in chatCompletion.GetStreamingChatMessageContentsAsync(history,
-                                   new OpenAIPromptExecutionSettings()
-                                   {
-                                       MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.AnalysisModel),
-                                       Temperature = 0.3,
-                                   }, kernel))
+                                   ExecutionSettingsFactory.CreateSettings(OpenAIOptions.AnalysisModel, temperature: 0.3), kernel))
                 {
                     if (!string.IsNullOrEmpty(item.Content))
                     {

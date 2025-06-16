@@ -4,7 +4,7 @@ using KoalaWiki.Domains;
 using KoalaWiki.Prompts;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using KoalaWiki.Utilities;
 
 namespace KoalaWiki.KoalaWarehouse.Overview;
 
@@ -19,11 +19,7 @@ public class OverviewService
     {
         var sr = new StringBuilder();
 
-        var settings = new OpenAIPromptExecutionSettings()
-        {
-            ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-            MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.ChatModel)
-        };
+        var settings = ExecutionSettingsFactory.CreateSettings(OpenAIOptions.ChatModel, enableToolCalls: true);
 
         var chat = kernel.GetRequiredService<IChatCompletionService>();
         var history = new ChatHistory();

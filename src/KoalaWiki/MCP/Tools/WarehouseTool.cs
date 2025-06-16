@@ -6,7 +6,7 @@ using KoalaWiki.Prompts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using KoalaWiki.Utilities;
 using ModelContextProtocol.Server;
 using OpenAI.Chat;
 
@@ -104,12 +104,7 @@ public sealed class WarehouseTool(IKoalaWikiContext koala)
         try
         {
             await foreach (var chatItem in chat.GetStreamingChatMessageContentsAsync(history,
-                               new OpenAIPromptExecutionSettings()
-                               {
-                                   ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                                   MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.ChatModel),
-                                   Temperature = 0.5
-                               }, fileKernel))
+                               ExecutionSettingsFactory.CreateSettings(OpenAIOptions.ChatModel, temperature: 0.5, enableToolCalls: true), fileKernel))
             {
                 // 发送数据
                 if (chatItem.InnerContent is StreamingChatCompletionUpdate message)

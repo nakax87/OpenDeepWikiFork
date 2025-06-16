@@ -5,7 +5,7 @@ using KoalaWiki.Entities;
 using KoalaWiki.Prompts;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using KoalaWiki.Utilities;
 using Newtonsoft.Json;
 
 namespace KoalaWiki.KoalaWarehouse.GenerateThinkCatalogue;
@@ -59,13 +59,7 @@ public class GenerateThinkCatalogueService
                 history.AddUserMessage(prompt);
 
                 await foreach (var item in chat.GetStreamingChatMessageContentsAsync(history,
-                                   new OpenAIPromptExecutionSettings()
-                                   {
-                                       ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                                       Temperature = 0.3,
-                                       // 这里使用分析模型的最大token
-                                       MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.AnalysisModel)
-                                   }, analysisModel))
+                                   ExecutionSettingsFactory.CreateSettings(OpenAIOptions.AnalysisModel, temperature: 0.3, enableToolCalls: true), analysisModel))
                 {
                     // 将推理内容输出
                     str.Append(item);
@@ -146,12 +140,7 @@ public class GenerateThinkCatalogueService
                 history.AddUserMessage(prompt);
 
                 await foreach (var item in chat.GetStreamingChatMessageContentsAsync(history,
-                                   new OpenAIPromptExecutionSettings()
-                                   {
-                                       ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                                       Temperature = 0.5,
-                                       MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.AnalysisModel)
-                                   }, analysisModel))
+                                   ExecutionSettingsFactory.CreateSettings(OpenAIOptions.AnalysisModel, temperature: 0.5, enableToolCalls: true), analysisModel))
                 {
                     str.Append(item);
                 }

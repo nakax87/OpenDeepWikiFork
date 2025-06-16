@@ -9,7 +9,7 @@ using KoalaWiki.Prompts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using KoalaWiki.Utilities;
 
 namespace KoalaWiki.KoalaWarehouse.DocumentPending;
 
@@ -216,12 +216,7 @@ public class DocumentPendingService
 
         var sr = new StringBuilder();
 
-        await foreach (var i in chat.GetStreamingChatMessageContentsAsync(history, new OpenAIPromptExecutionSettings()
-                       {
-                           ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                           MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.ChatModel),
-                           Temperature = 0.5,
-                       }, kernel))
+        await foreach (var i in chat.GetStreamingChatMessageContentsAsync(history, ExecutionSettingsFactory.CreateSettings(OpenAIOptions.ChatModel, temperature: 0.5, enableToolCalls: true), kernel))
         {
             if (!string.IsNullOrEmpty(i.Content))
             {
