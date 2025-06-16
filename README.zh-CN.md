@@ -315,6 +315,14 @@ make build-backend-arm
 make build-frontend-amd
 ```
 
+## 👥 贡献者
+
+感谢所有为这个项目做出贡献的开发者！
+<div align="center">
+<a href="https://github.com/AIDotNet/OpenDeepWiki/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=AIDotNet/OpenDeepWiki&max=50&columns=10" />
+</a>
+
 ## Discord
 
 [加入我们](https://discord.gg/Y3fvpnGVwt)
