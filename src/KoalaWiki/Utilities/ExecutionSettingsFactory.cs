@@ -17,12 +17,13 @@ namespace KoalaWiki.Utilities
             
             if (OpenAIOptions.ModelProvider.Equals("AmazonBedrock", StringComparison.OrdinalIgnoreCase))
             {
+                #pragma warning disable SKEXP0070 // 種類は、評価の目的でのみ提供されています。将来の更新で変更または削除されることがあります。続行するには、この診断を非表示にします。
                 return new AmazonClaudeExecutionSettings()
                 {
-                    MaxTokens = effectiveMaxTokens,
-                    Temperature = temperature,
-                    ToolCallBehavior = enableToolCalls ? ToolCallBehavior.AutoInvokeKernelFunctions : ToolCallBehavior.DisableToolCalling
+                    MaxTokensToSample = effectiveMaxTokens ?? 4096,
+                    Temperature = (float)temperature
                 };
+                #pragma warning restore SKEXP0070 // 種類は、評価の目的でのみ提供されています。将来の更新で変更または削除されることがあります。続行するには、この診断を非表示にします。
             }
             else
             {
