@@ -31,7 +31,7 @@ namespace KoalaWiki.Utilities
                 {
                     MaxTokens = effectiveMaxTokens,
                     Temperature = temperature,
-                    ToolCallBehavior = enableToolCalls ? ToolCallBehavior.AutoInvokeKernelFunctions : ToolCallBehavior.DisableToolCalling
+                    ToolCallBehavior = enableToolCalls ? ToolCallBehavior.AutoInvokeKernelFunctions : null
                 };
             }
         }
