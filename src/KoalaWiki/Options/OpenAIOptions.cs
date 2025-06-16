@@ -93,7 +93,7 @@ public class OpenAIOptions
                               configuration.GetValue<string>("AwsSecretAccessKey")).GetTrimmedValueOrEmpty();
 
         // EnableIncrementalUpdate
-        var enableIncrementalUpdate = configuration.GetValue<bool>("ENABLE_INCREMENTAL_UPDATE");
+        var enableIncrementalUpdate = configuration.GetValue<bool>("ENABLE_INCREMENTAL_UPDATE", false);
         DocumentOptions.EnableIncrementalUpdate = enableIncrementalUpdate;
 
         if (string.IsNullOrEmpty(ModelProvider))
