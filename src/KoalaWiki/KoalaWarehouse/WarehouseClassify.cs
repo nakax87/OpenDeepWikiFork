@@ -28,14 +28,20 @@ public class WarehouseClassify
         var result = await kernel.InvokePromptAsync(prompt);
         var promptResult = string.Empty;
 
-        var jsonContent =
-            JsonNode.Parse(ModelReaderWriter.Write(result.GetValue<OpenAIChatMessageContent>().InnerContent));
-
-        // 如果存在reasoning_content则说明是推理
-        if (jsonContent!["choices"]![0]!["message"]!["reasoning_content"] != null)
+        // プロバイダーに応じて reasoning_content を処理
+        if (OpenAIOptions.ModelProvider.Equals("OpenAI", StringComparison.OrdinalIgnoreCase) ||
+            OpenAIOptions.ModelProvider.Equals("AzureOpenAI", StringComparison.OrdinalIgnoreCase))
         {
-            promptResult += jsonContent!["choices"]![0]!["message"]!["reasoning_content"];
+            var openAIContent = result.GetValue<OpenAIChatMessageContent>();
+            var jsonContent = JsonNode.Parse(ModelReaderWriter.Write(openAIContent.InnerContent));
+
+            // 如果存在reasoning_content则说明是推理
+            if (jsonContent!["choices"]![0]!["message"]!["reasoning_content"] != null)
+            {
+                promptResult += jsonContent!["choices"]![0]!["message"]!["reasoning_content"];
+            }
         }
+        // AmazonBedrock や他のプロバイダーの場合は result.ToString() のみ使用
 
         promptResult += result.ToString();
 
