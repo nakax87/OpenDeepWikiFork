@@ -34,7 +34,7 @@ public partial class DocumentsService
         var plugin = kernel.Plugins["CodeAnalysis"]["CommitAnalyze"];
 
         var str = string.Empty;
-        await foreach (var item in kernel.InvokeStreamingAsync(plugin, new KernelArguments()
+        await foreach (var item in kernel.InvokeStreamingAsync(plugin, new KernelArguments(ExecutionSettingsFactory.AddSettings(OpenAIOptions.ChatModel))
                        {
                            ["readme"] = readme,
                            ["git_repository"] = gitRepositoryUrl,

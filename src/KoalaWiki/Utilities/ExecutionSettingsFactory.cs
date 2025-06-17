@@ -36,6 +36,31 @@ namespace KoalaWiki.Utilities
             }
         }
 
+    public static PromptExecutionSettings AddMaxTokenSetting(
+            string model, 
+            int? maxTokens = null)
+        {
+            var effectiveMaxTokens = maxTokens ?? GetMaxTokens(model);
+            
+            if (OpenAIOptions.ModelProvider.Equals("AmazonBedrock", StringComparison.OrdinalIgnoreCase))
+            {
+                #pragma warning disable SKEXP0070 // 種類は、評価の目的でのみ提供されています。将来の更新で変更または削除されることがあります。続行するには、この診断を非表示にします。
+                return new AmazonClaudeExecutionSettings()
+                {
+                    MaxTokensToSample = effectiveMaxTokens ?? 4096,
+                };
+                #pragma warning restore SKEXP0070 // 種類は、評価の目的でのみ提供されています。将来の更新で変更または削除されることがあります。続行するには、この診断を非表示にします。
+            }
+            else
+            {
+                return new OpenAIPromptExecutionSettings()
+                {
+                    MaxTokens = effectiveMaxTokens,
+                };
+            }
+        }
+
+
         public static int? GetMaxTokens(string model)
         {
             if (model.StartsWith("deepseek-r1"))
