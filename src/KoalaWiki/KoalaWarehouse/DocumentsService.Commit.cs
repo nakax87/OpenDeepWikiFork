@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using KoalaWiki.Utilities;
 using LibGit2Sharp;
 using Microsoft.SemanticKernel;
 using Newtonsoft.Json;
