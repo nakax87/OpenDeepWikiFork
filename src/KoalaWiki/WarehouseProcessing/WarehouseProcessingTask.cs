@@ -37,6 +37,12 @@ public partial class WarehouseProcessingTask(IServiceProvider service, ILogger<W
                     .Where(x => x.Status == WarehouseStatus.Completed)
                     .FirstOrDefaultAsync(stoppingToken);
 
+                if (warehouse == null)
+                {
+                    await Task.Delay(1000 * 60, stoppingToken);
+                    continue;
+                }
+
                 var documents = await dbContext.Documents
                     .Where(x => warehouse.Id == x.WarehouseId && x.LastUpdate < DateTime.Now.AddDays(-updateInterval))
                     .ToListAsync(stoppingToken);
