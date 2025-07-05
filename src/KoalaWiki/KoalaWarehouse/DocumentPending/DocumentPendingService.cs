@@ -2,8 +2,9 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using KoalaWiki.Domains;
+using KoalaWiki.Domains.DocumentFile;
+using KoalaWiki.Domains.Warehouse;
 using KoalaWiki.Entities;
-using KoalaWiki.Entities.DocumentFile;
 using KoalaWiki.Functions;
 using KoalaWiki.Prompts;
 using Microsoft.EntityFrameworkCore;
@@ -181,47 +182,37 @@ public class DocumentPendingService
     {
         var chat = kernel.Services.GetService<IChatCompletionService>();
 
-        string prompt = string.Empty;
+        string promptName = nameof(PromptConstant.Warehouse.GenerateDocs);
         if (classify.HasValue)
         {
-            prompt = await PromptContext.Warehouse(nameof(PromptConstant.Warehouse.GenerateDocs) + classify,
-                new KernelArguments()
-                {
-                    ["catalogue"] = catalogue,
-                    ["prompt"] = catalog.Prompt,
-                    ["git_repository"] = gitRepository.Replace(".git", ""),
-                    ["branch"] = branch,
-                    ["title"] = catalog.Name
-                },OpenAIOptions.ChatModel);
+            promptName += classify;
         }
-        else
-        {
-            prompt = await PromptContext.Warehouse(nameof(PromptConstant.Warehouse.GenerateDocs),
-                new KernelArguments()
-                {
-                    ["catalogue"] = catalogue,
-                    ["prompt"] = catalog.Prompt,
-                    ["git_repository"] = gitRepository.Replace(".git", ""),
-                    ["branch"] = branch,
-                    ["title"] = catalog.Name
-                },OpenAIOptions.ChatModel);
-        }
+
+        string prompt = await PromptContext.Warehouse(promptName,
+            new KernelArguments()
+            {
+                ["catalogue"] = catalogue,
+                ["prompt"] = catalog.Prompt,
+                ["git_repository"] = gitRepository.Replace(".git", ""),
+                ["branch"] = branch,
+                ["title"] = catalog.Name
+            }, OpenAIOptions.ChatModel);
 
         var history = new ChatHistory();
 
+        history.AddSystemEnhance();
         history.AddUserMessage(prompt);
-
-        var fileFunction = new FileFunction(path);
-        history.AddUserMessage(await fileFunction.ReadFilesAsync(catalog.DependentFile.ToArray()));
 
         var sr = new StringBuilder();
 
-        await foreach (var i in chat.GetStreamingChatMessageContentsAsync(history, new OpenAIPromptExecutionSettings()
-                       {
-                           ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                           MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.ChatModel),
-                           Temperature = 0.5,
-                       }, kernel))
+        var settings = new OpenAIPromptExecutionSettings()
+        {
+            ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+            MaxTokens = DocumentsHelper.GetMaxTokens(OpenAIOptions.ChatModel),
+            Temperature = 0.5,
+        };
+
+        await foreach (var i in chat.GetStreamingChatMessageContentsAsync(history, settings, kernel))
         {
             if (!string.IsNullOrEmpty(i.Content))
             {
@@ -229,8 +220,37 @@ public class DocumentPendingService
             }
         }
 
+        if (DocumentOptions.RefineAndEnhanceQuality)
+        {
+            history.AddAssistantMessage(sr.ToString());
+            history.AddUserMessage(
+                """
+                You need to further refine the previous content and provide more detailed information. All the content comes from the code repository and the style of the documentation should be more standardized.
+                Create thorough documentation that:
+                - Covers all key functionality with precise technical details
+                - Includes practical code examples and usage patterns  
+                - Ensures completeness without gaps or omissions
+                - Maintains clarity and professional quality throughout
+                Please do your best and spare no effort.
+                """);
+
+            sr.Clear();
+            await foreach (var item in chat.GetStreamingChatMessageContentsAsync(history, settings, kernel))
+            {
+                if (!string.IsNullOrEmpty(item.Content))
+                {
+                    sr.Append(item.Content);
+                }
+            }
+        }
+
+        // 删除内容中所有的<thinking>内的内容，可能存在多个<thinking>标签,
+        var thinkingRegex = new Regex(@"<thinking>.*?</thinking>", RegexOptions.Singleline);
+        sr = new StringBuilder(thinkingRegex.Replace(sr.ToString(), string.Empty));
+
+
         // 使用正则表达式将<blog></blog>中的内容提取
-        var regex = new Regex(@"<docs>(.*?)</docs>", RegexOptions.Singleline);
+        var regex = new Regex(@"<blog>(.*?)</blog>", RegexOptions.Singleline);
 
         var match = regex.Match(sr.ToString());
 
@@ -243,10 +263,20 @@ public class DocumentPendingService
         }
 
         var content = sr.ToString().Trim();
-        
+
         // 删除所有的所有的<think></think>
         var thinkRegex = new Regex(@"<think>(.*?)</think>", RegexOptions.Singleline);
         content = thinkRegex.Replace(content, string.Empty);
+
+        // 从docs提取
+        var docsRegex = new Regex(@"<docs>(.*?)</docs>", RegexOptions.Singleline);
+        var docsMatch = docsRegex.Match(content);
+        if (docsMatch.Success)
+        {
+            // 提取到的内容
+            var extractedDocs = docsMatch.Groups[1].Value;
+            content = content.Replace(docsMatch.Value, extractedDocs);
+        }
 
         var fileItem = new DocumentFileItem()
         {

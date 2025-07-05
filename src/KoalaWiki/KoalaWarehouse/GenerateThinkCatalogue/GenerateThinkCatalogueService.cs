@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 using KoalaWiki.Domains;
+using KoalaWiki.Domains.Warehouse;
 using KoalaWiki.Entities;
 using KoalaWiki.Prompts;
 using Microsoft.SemanticKernel;
@@ -10,34 +11,25 @@ using Newtonsoft.Json;
 
 namespace KoalaWiki.KoalaWarehouse.GenerateThinkCatalogue;
 
-public class GenerateThinkCatalogueService
+public static class GenerateThinkCatalogueService
 {
-    public static async Task<(DocumentResultCatalogue catalogue, Exception? exception)> GenerateThinkCatalogue(
-        string path,
-        string catalogue, string gitRepository,
+    public static async Task<DocumentResultCatalogue> GenerateCatalogue(string path, string gitRepository,
+        string catalogue,
         Warehouse warehouse, ClassifyType? classify)
     {
-        string prompt = string.Empty;
+        string promptName = nameof(PromptConstant.Warehouse.AnalyzeCatalogue);
         if (classify.HasValue)
         {
-            prompt = await PromptContext.Warehouse(nameof(PromptConstant.Warehouse.GenerateThinkCatalogue) + classify,
-                new KernelArguments()
-                {
-                    ["code_files"] = catalogue,
-                    ["git_repository_url"] = gitRepository.Replace(".git", ""),
-                    ["repository_name"] = warehouse.Name
-                }, OpenAIOptions.AnalysisModel);
+            promptName += classify;
         }
-        else
-        {
-            prompt = await PromptContext.Warehouse(nameof(PromptConstant.Warehouse.GenerateThinkCatalogue),
-                new KernelArguments()
-                {
-                    ["code_files"] = catalogue,
-                    ["git_repository_url"] = gitRepository.Replace(".git", ""),
-                    ["repository_name"] = warehouse.Name
-                }, OpenAIOptions.AnalysisModel);
-        }
+
+        string prompt = await PromptContext.Warehouse(promptName,
+            new KernelArguments()
+            {
+                ["code_files"] = catalogue,
+                ["git_repository_url"] = gitRepository.Replace(".git", ""),
+                ["repository_name"] = warehouse.Name
+            }, OpenAIOptions.AnalysisModel);
 
         DocumentResultCatalogue? result = null;
 
@@ -49,111 +41,48 @@ public class GenerateThinkCatalogueService
         {
             try
             {
+                StringBuilder str = new StringBuilder();
+                var history = new ChatHistory();
+                history.AddSystemEnhance();
+                history.AddUserMessage(prompt);
+
+                history.AddAssistantMessage(
+                    "Ok. Now I will start analyzing the core file. And I won't ask you questions or notify you. I will directly provide you with the required content. Please confirm");
+                history.AddUserMessage(
+                    "OK, I confirm that you can start analyzing the core file now. Please proceed with the analysis and provide the relevant content as required. There is no need to ask questions or notify me. The generated document structure will be refined and a complete and detailed directory structure of document types will be provided through project file reading and analysis.");
+
                 var analysisModel = KernelFactory.GetKernel(OpenAIOptions.Endpoint,
                     OpenAIOptions.ChatApiKey, path, OpenAIOptions.AnalysisModel, false);
 
                 var chat = analysisModel.Services.GetService<IChatCompletionService>();
-
-                StringBuilder str = new StringBuilder();
-                var history = new ChatHistory();
-                history.AddUserMessage(prompt);
+                var settings = new OpenAIPromptExecutionSettings()
+                {
+                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+                    Temperature = 0.5,
+                    MaxTokens = DocumentsHelper.GetMaxTokens(OpenAIOptions.AnalysisModel)
+                };
 
                 await foreach (var item in chat.GetStreamingChatMessageContentsAsync(history,
-                                   new OpenAIPromptExecutionSettings()
-                                   {
-                                       ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                                       Temperature = 0.3,
-                                       // 这里使用分析模型的最大token
-                                       MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.AnalysisModel)
-                                   }, analysisModel))
+                                   settings, analysisModel))
                 {
-                    // 将推理内容输出
                     str.Append(item);
                 }
 
-                result =
-                    await GenerateCatalogue(str.ToString(), path, gitRepository, catalogue, warehouse, classify);
-
-                break;
-            }
-            catch (Exception ex)
-            {
-                Log.Logger.Warning("处理仓库；{path} ,处理标题：{name} 失败:{ex}", path, warehouse.Name, ex.ToString());
-                exception = ex;
-                retryCount++;
-                if (retryCount >= maxRetries)
+                if (DocumentOptions.RefineAndEnhanceQuality)
                 {
-                    Console.WriteLine($"处理 {warehouse.Name} 失败，已重试 {retryCount} 次，错误：{ex.Message}");
-                }
-                else
-                {
-                    // 等待一段时间后重试
-                    await Task.Delay(5000 * retryCount);
-                }
-            }
-        }
+                    history.AddAssistantMessage(str.ToString());
+                    history.AddUserMessage(
+                        "The directory you have provided now is not detailed enough, and the project code files have not been carefully analyzed.  Generate a complete project document directory structure and conduct a detailed analysis Organize hierarchically with clear explanations for each component's role and functionality. Please do your best and spare no effort.");
 
-        return (result, exception);
-    }
-
-
-    public static async Task<DocumentResultCatalogue> GenerateCatalogue(string think,
-        string path, string gitRepository, string catalogue,
-        Warehouse warehouse, ClassifyType? classify)
-    {
-        string prompt = string.Empty;
-        if (classify.HasValue)
-        {
-            prompt = await PromptContext.Warehouse(nameof(PromptConstant.Warehouse.AnalyzeCatalogue) + classify,
-                new KernelArguments()
-                {
-                    ["code_files"] = catalogue,
-                    ["think"] = think,
-                    ["git_repository_url"] = gitRepository.Replace(".git", ""),
-                    ["repository_name"] = warehouse.Name
-                }, OpenAIOptions.AnalysisModel);
-        }
-        else
-        {
-            prompt = await PromptContext.Warehouse(nameof(PromptConstant.Warehouse.AnalyzeCatalogue),
-                new KernelArguments()
-                {
-                    ["code_files"] = catalogue,
-                    ["think"] = think,
-                    ["git_repository_url"] = gitRepository.Replace(".git", ""),
-                    ["repository_name"] = warehouse.Name
-                }, OpenAIOptions.AnalysisModel);
-        }
-
-
-        DocumentResultCatalogue? result = null;
-
-        var retryCount = 0;
-        const int maxRetries = 5;
-        Exception? exception = null;
-
-        while (retryCount < maxRetries)
-        {
-            try
-            {
-                var analysisModel = KernelFactory.GetKernel(OpenAIOptions.Endpoint,
-                    OpenAIOptions.ChatApiKey, path, OpenAIOptions.AnalysisModel, false);
-
-                var chat = analysisModel.Services.GetService<IChatCompletionService>();
-
-                StringBuilder str = new StringBuilder();
-                var history = new ChatHistory();
-                history.AddUserMessage(prompt);
-
-                await foreach (var item in chat.GetStreamingChatMessageContentsAsync(history,
-                                   new OpenAIPromptExecutionSettings()
-                                   {
-                                       ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                                       Temperature = 0.5,
-                                       MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.AnalysisModel)
-                                   }, analysisModel))
-                {
-                    str.Append(item);
+                    str.Clear();
+                    await foreach (var item in chat.GetStreamingChatMessageContentsAsync(history, settings,
+                                       analysisModel))
+                    {
+                        if (!string.IsNullOrEmpty(item.Content))
+                        {
+                            str.Append(item.Content);
+                        }
+                    }
                 }
 
                 // 可能需要先处理一下documentation_structure 有些模型不支持json
@@ -228,11 +157,6 @@ public class GenerateThinkCatalogueService
                     await Task.Delay(5000 * retryCount);
                 }
             }
-        }
-
-        if (result == null)
-        {
-            throw new Exception($"处理仓库；{path} ,处理标题：{warehouse.Name} 失败:没有结果，推理内容：{think}");
         }
 
         return result;

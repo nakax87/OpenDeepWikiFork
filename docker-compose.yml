@@ -19,6 +19,9 @@
       - ENABLE_CODED_DEPENDENCY_ANALYSIS=false # 是否启用代码依赖分析？这可能会对代码的质量产生影响。
       - ENABLE_WAREHOUSE_FUNCTION_PROMPT_TASK=false # 是否启用MCP Prompt生成
       - ENABLE_WAREHOUSE_DESCRIPTION_TASK=false # 是否启用仓库Description生成
+      - OTEL_SERVICE_NAME=koalawiki
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
     volumes:
       - ./repositories:/app/repositories
       - ./data:/data
@@ -43,4 +46,11 @@
     depends_on:
       - koalawiki
       - koalawiki-web
- 
+  
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard
+    container_name: aspire-dashboard
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+      - Dashboard:ApplicationName=Aspire

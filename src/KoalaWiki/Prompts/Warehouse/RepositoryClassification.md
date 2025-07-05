@@ -136,9 +136,7 @@ Score each category based on weighted evidence:
 3. Verify consistency across multiple analysis dimensions
 4. Consider project maturity, scale, and ecosystem position
 
-## Classification Output
-
-output format:
+Please output in the following format: Use the <classify> tag to include the result:
 <classify>
 classifyName:classifyName
 </classify>

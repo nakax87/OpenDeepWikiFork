@@ -1,5 +1,6 @@
 ﻿using System.ClientModel;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using KoalaWiki.Functions;
 using KoalaWiki.Options;
 using KoalaWiki.plugins;
@@ -26,12 +27,18 @@ public static class KernelFactory
         string gitPath,
         string model = "gpt-4.1", bool isCodeAnalysis = true)
     {
+        using var activity = Activity.Current?.Source.StartActivity();
+        activity?.SetTag("model", model);
+        activity?.SetTag("provider", OpenAIOptions.ModelProvider);
+        activity?.SetTag("code_analysis_enabled", isCodeAnalysis);
+        activity?.SetTag("git_path", gitPath);
+
         var kernelBuilder = Kernel.CreateBuilder();
 
         kernelBuilder.Services.AddSerilog(Log.Logger);
 
         kernelBuilder.Services.AddSingleton<IPromptRenderFilter, LanguagePromptFilter>();
-        
+
         if (OpenAIOptions.ModelProvider.Equals("OpenAI", StringComparison.OrdinalIgnoreCase))
         {
             kernelBuilder.AddOpenAIChatCompletion(model, new Uri(chatEndpoint), apiKey,
@@ -79,6 +86,7 @@ public static class KernelFactory
         }
         else
         {
+            activity?.SetStatus(ActivityStatusCode.Error, "不支持的模型提供者");
             throw new Exception("暂不支持：" + OpenAIOptions.ModelProvider + "，请使用OpenAI、AzureOpenAI或Anthropic");
         }
 
@@ -86,19 +94,26 @@ public static class KernelFactory
         {
             kernelBuilder.Plugins.AddFromPromptDirectory(Path.Combine(AppContext.BaseDirectory, "plugins",
                 "CodeAnalysis"));
+            activity?.SetTag("plugins.code_analysis", "loaded");
         }
 
         // 添加文件函数
         var fileFunction = new FileFunction(gitPath);
         kernelBuilder.Plugins.AddFromObject(fileFunction);
+        activity?.SetTag("plugins.file_function", "loaded");
 
         if (DocumentOptions.EnableCodeDependencyAnalysis)
         {
             var codeAnalyzeFunction = new CodeAnalyzeFunction(gitPath);
             kernelBuilder.Plugins.AddFromObject(codeAnalyzeFunction);
+            activity?.SetTag("plugins.code_analyze_function", "loaded");
         }
 
         var kernel = kernelBuilder.Build();
+        kernel.FunctionInvocationFilters.Add(new FunctionResultInterceptor());
+
+        activity?.SetStatus(ActivityStatusCode.Ok);
+        activity?.SetTag("kernel.created", true);
 
         return kernel;
     }

@@ -1,5 +1,5 @@
 'use client'
-import { Card, Table, Button, Input, Space, Tag, Dropdown, Modal, Form, Select, Switch, message } from 'antd';
+import { Card, Table, Button, Input, Space, Tag, Dropdown, Modal, Form, Select, Switch, message, Typography } from 'antd';
 import {
   UserOutlined,
   SearchOutlined,
@@ -11,17 +11,36 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { useState, useEffect } from 'react';
 import { getUserList, createUser, updateUser, deleteUser, UserInfo, CreateUserRequest, UpdateUserRequest } from '../../services/userService';
+import { roleService, Role } from '../../services/roleService';
+
+const { Title, Text } = Typography;
 
 export default function UsersPage() {
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<UserInfo[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
   const [form] = Form.useForm();
+
+  // 加载角色数据
+  const loadRoles = async () => {
+    try {
+      setRolesLoading(true);
+      const response = await roleService.getRoleList(1, 100, '', true); // 只获取激活的角色
+      setRoles(response.items);
+    } catch (error) {
+      console.error('加载角色数据失败:', error);
+      message.error('加载角色数据失败');
+    } finally {
+      setRolesLoading(false);
+    }
+  };
 
   // 加载用户数据
   const loadUsers = async (page = currentPage, size = pageSize, keyword = searchText) => {
@@ -45,6 +64,7 @@ export default function UsersPage() {
   // 初始加载
   useEffect(() => {
     loadUsers();
+    loadRoles();
   }, []);
 
   // 处理搜索
@@ -149,49 +169,91 @@ export default function UsersPage() {
     setIsModalOpen(true);
   };
 
+  // 根据角色获取标签颜色和样式
+  const getRoleTagProps = (role: string) => {
+    if (role === 'admin' || role === '管理员') {
+      return {
+        color: '#ff4d4f',
+        backgroundColor: '#fff2f0',
+        border: 'none',
+        fontWeight: 500,
+      };
+    } else {
+      return {
+        color: '#1677ff',
+        backgroundColor: '#e6f4ff',
+        border: 'none',
+        fontWeight: 500,
+      };
+    }
+  };
+
   // 表格列定义
   const columns: ColumnsType<UserInfo> = [
     {
       title: '用户名',
       dataIndex: 'name',
       key: 'name',
-      render: (text) => <a>{text}</a>,
+      render: (text) => (
+        <Text strong style={{ color: '#000000' }}>
+          {text}
+        </Text>
+      ),
     },
     {
       title: '邮箱',
       dataIndex: 'email',
       key: 'email',
+      render: (text) => (
+        <Text style={{ color: '#8c8c8c' }}>
+          {text}
+        </Text>
+      ),
     },
     {
       title: '角色',
       dataIndex: 'role',
       key: 'role',
       render: (role) => {
-        let color = 'blue';
-        let text = '用户';
-
-        if (role === 'admin') {
-          color = 'red';
-          text = '管理员';
-        } else if (role === 'editor') {
-          color = 'green';
-          text = '编辑者';
-        }
-
-        return <Tag color={color}>{text}</Tag>;
+        const roleInfo = roles.find(r => r.name === role);
+        const displayName = roleInfo ? roleInfo.name : role;
+        const tagProps = getRoleTagProps(role);
+        
+        return (
+          <Tag
+            style={{
+              color: tagProps.color,
+              backgroundColor: tagProps.backgroundColor,
+              border: tagProps.border,
+              fontWeight: tagProps.fontWeight,
+              borderRadius: '4px',
+              padding: '2px 8px',
+            }}
+          >
+            {displayName}
+          </Tag>
+        );
       },
     },
     {
       title: '最后登录',
       dataIndex: 'lastLoginAt',
       key: 'lastLoginAt',
-      render: (text) => text ? new Date(text).toLocaleString() : '从未登录',
+      render: (text) => (
+        <Text style={{ color: '#8c8c8c' }}>
+          {text ? new Date(text).toLocaleString() : '从未登录'}
+        </Text>
+      ),
     },
     {
       title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (text) => new Date(text).toLocaleString(),
+      render: (text) => (
+        <Text style={{ color: '#8c8c8c' }}>
+          {new Date(text).toLocaleString()}
+        </Text>
+      ),
     },
     {
       title: '操作',
@@ -219,7 +281,14 @@ export default function UsersPage() {
             ],
           }}
         >
-          <Button type="text" icon={<MoreOutlined />} />
+          <Button 
+            type="text" 
+            icon={<MoreOutlined />}
+            style={{
+              color: '#8c8c8c',
+              borderRadius: '4px',
+            }}
+          />
         </Dropdown>
       ),
     },
@@ -227,26 +296,73 @@ export default function UsersPage() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>用户管理</h2>
+      <div style={{ marginBottom: '32px' }}>
+        <Title level={2} style={{ 
+          fontSize: '24px', 
+          fontWeight: 600, 
+          margin: 0,
+          color: '#000000'
+        }}>
+          用户管理
+        </Title>
+        <Text style={{ 
+          fontSize: '14px', 
+          color: '#8c8c8c',
+          marginTop: '8px',
+          display: 'block'
+        }}>
+          管理系统用户和权限设置
+        </Text>
+      </div>
 
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+      <Card style={{
+        backgroundColor: '#ffffff',
+        border: '1px solid #e8e8e8',
+        borderRadius: '8px',
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '24px' 
+        }}>
           <Space>
             <Input
               placeholder="搜索用户名或邮箱"
               prefix={<SearchOutlined />}
-              style={{ width: 300 }}
+              style={{ 
+                width: 300,
+                borderRadius: '4px',
+                border: '1px solid #e8e8e8',
+              }}
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
               onPressEnter={handleSearch}
               allowClear
             />
-            <Button type="primary" onClick={handleSearch}>搜索</Button>
+            <Button 
+              type="primary" 
+              onClick={handleSearch}
+              style={{
+                backgroundColor: '#1677ff',
+                borderColor: '#1677ff',
+                borderRadius: '4px',
+                fontWeight: 500,
+              }}
+            >
+              搜索
+            </Button>
           </Space>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleAddUser}
+            style={{
+              backgroundColor: '#1677ff',
+              borderColor: '#1677ff',
+              borderRadius: '4px',
+              fontWeight: 500,
+            }}
           >
             添加用户
           </Button>
@@ -263,73 +379,134 @@ export default function UsersPage() {
             total: total,
             showSizeChanger: true,
             showTotal: (total) => `共 ${total} 条记录`,
+            style: {
+              marginTop: '24px',
+            },
           }}
           onChange={handleTableChange}
+          style={{
+            borderRadius: '8px',
+          }}
         />
       </Card>
 
       {/* 用户编辑/创建表单 */}
       <Modal
-        title={currentUser ? "编辑用户" : "添加用户"}
+        title={
+          <Text strong style={{ fontSize: '16px', color: '#000000' }}>
+            {currentUser ? "编辑用户" : "添加用户"}
+          </Text>
+        }
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onOk={handleFormSubmit}
         okText={currentUser ? "保存" : "创建"}
         cancelText="取消"
+        okButtonProps={{
+          style: {
+            backgroundColor: '#1677ff',
+            borderColor: '#1677ff',
+            borderRadius: '4px',
+            fontWeight: 500,
+          }
+        }}
+        cancelButtonProps={{
+          style: {
+            borderColor: '#e8e8e8',
+            borderRadius: '4px',
+            fontWeight: 500,
+          }
+        }}
       >
         <Form
           form={form}
           layout="vertical"
+          style={{ marginTop: '24px' }}
         >
           <Form.Item
             name="name"
-            label="用户名"
+            label={<Text strong style={{ color: '#000000' }}>用户名</Text>}
             rules={[{ required: true, message: '请输入用户名' }]}
           >
-            <Input prefix={<UserOutlined />} placeholder="用户名" />
+            <Input 
+              prefix={<UserOutlined />} 
+              placeholder="用户名"
+              style={{
+                borderRadius: '4px',
+                border: '1px solid #e8e8e8',
+              }}
+            />
           </Form.Item>
 
           <Form.Item
             name="email"
-            label="邮箱"
+            label={<Text strong style={{ color: '#000000' }}>邮箱</Text>}
             rules={[
               { required: true, message: '请输入邮箱' },
               { type: 'email', message: '请输入有效的邮箱' }
             ]}
           >
-            <Input placeholder="邮箱地址" />
+            <Input 
+              placeholder="邮箱地址"
+              style={{
+                borderRadius: '4px',
+                border: '1px solid #e8e8e8',
+              }}
+            />
           </Form.Item>
 
           {!currentUser && (
             <Form.Item
               name="password"
-              label="密码"
+              label={<Text strong style={{ color: '#000000' }}>密码</Text>}
               rules={[{ required: true, message: '请输入密码' }]}
             >
-              <Input.Password placeholder="密码" />
+              <Input.Password 
+                placeholder="密码"
+                style={{
+                  borderRadius: '4px',
+                  border: '1px solid #e8e8e8',
+                }}
+              />
             </Form.Item>
           )}
 
           {currentUser && (
             <Form.Item
               name="password"
-              label="密码"
-              help="如需修改密码请输入新密码，否则留空"
+              label={<Text strong style={{ color: '#000000' }}>密码</Text>}
+              help={<Text style={{ color: '#8c8c8c' }}>如需修改密码请输入新密码，否则留空</Text>}
             >
-              <Input.Password placeholder="新密码（可选）" />
+              <Input.Password 
+                placeholder="新密码（可选）"
+                style={{
+                  borderRadius: '4px',
+                  border: '1px solid #e8e8e8',
+                }}
+              />
             </Form.Item>
           )}
 
           <Form.Item
             name="role"
-            label="角色"
+            label={<Text strong style={{ color: '#000000' }}>角色</Text>}
             rules={[{ required: true, message: '请选择角色' }]}
             initialValue="user"
           >
-            <Select>
-              <Select.Option value="admin">管理员</Select.Option>
-              <Select.Option value="editor">编辑者</Select.Option>
-              <Select.Option value="user">普通用户</Select.Option>
+            <Select 
+              placeholder="请选择角色"
+              loading={rolesLoading}
+              disabled={rolesLoading}
+              style={{
+                borderRadius: '4px',
+              }}
+            >
+              {roles.map(role => (
+                <Select.Option key={role.id} value={role.name}>
+                  {role.name}
+                  {role.description && ` - ${role.description}`}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
         </Form>

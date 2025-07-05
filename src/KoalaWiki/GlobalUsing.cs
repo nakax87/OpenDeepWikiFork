@@ -8,7 +8,6 @@ global using KoalaWiki.KoalaWarehouse;
 global using KoalaWiki.MCP;
 global using KoalaWiki.Options;
 global using KoalaWiki.Services;
-global using KoalaWiki.WarehouseProcessing;
 global using Mapster;
 global using Microsoft.AspNetCore.Authentication.JwtBearer;
 global using Microsoft.AspNetCore.Http.Features;

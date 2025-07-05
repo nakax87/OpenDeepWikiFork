@@ -64,28 +64,6 @@ export default function Sidebar({ isSidebarOpen, selectedKey }: SidebarProps) {
         width: isSidebarOpen ? '16rem' : '5rem'
       }}
     >
-      {/* Logo区域 */}
-      <div style={{
-        height: '4rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0 1rem',
-        borderBottom: '1px solid #f1f5f9'
-      }}>
-        <Link href="/admin" style={{ 
-          color: '#0771c9', 
-          fontWeight: 'bold' 
-        }}>
-          {isSidebarOpen ? (
-            <span style={{ fontSize: '1.25rem' }}>OpenDeepWiki 管理</span>
-          ) : (
-            <span style={{ fontSize: '1.25rem' }}>ODW</span>
-          )}
-        </Link>
-      </div>
-
-      {/* 导航菜单 */}
       <nav style={{ marginTop: '1.5rem' }}>
         <ul style={{ padding: '0 0.75rem' }}>
           {navItems.map((item) => (

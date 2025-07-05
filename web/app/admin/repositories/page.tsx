@@ -1,5 +1,5 @@
 'use client'
-import { Card, Table, Button, Input, Space, Tag, Dropdown, Modal, Form, Select, Badge, Avatar, message } from 'antd';
+import { Card, Table, Button, Input, Space, Tag, Dropdown, Modal, Form, Select, Badge, Avatar, message, Typography, Switch } from 'antd';
 import {
   SearchOutlined,
   PlusOutlined,
@@ -19,14 +19,46 @@ import { getRepositoryList, createGitRepository, updateRepository, deleteReposit
 import Link from 'next/link';
 import { Tooltip } from '@lobehub/ui';
 
-// 仓库状态映射
+const { Title, Text } = Typography;
+
+// 仓库状态映射 - 优化色彩方案
 const statusMap = {
-  0: { text: '待处理', color: 'orange' },
-  1: { text: '处理中', color: 'blue' },
-  2: { text: '已完成', color: 'green' },
-  3: { text: '已取消', color: 'default' },
-  4: { text: '未授权', color: 'red' },
-  99: { text: '已失败', color: 'red' }
+  0: { 
+    text: '待处理', 
+    color: '#faad14',
+    backgroundColor: '#fff7e6',
+    borderColor: '#faad14'
+  },
+  1: { 
+    text: '处理中', 
+    color: '#1677ff',
+    backgroundColor: '#e6f4ff',
+    borderColor: '#1677ff'
+  },
+  2: { 
+    text: '已完成', 
+    color: '#52c41a',
+    backgroundColor: '#f6ffed',
+    borderColor: '#52c41a'
+  },
+  3: { 
+    text: '已取消', 
+    color: '#8c8c8c',
+    backgroundColor: '#f5f5f5',
+    borderColor: '#8c8c8c'
+  },
+  4: { 
+    text: '未授权', 
+    color: '#ff4d4f',
+    backgroundColor: '#fff2f0',
+    borderColor: '#ff4d4f'
+  },
+  99: { 
+    text: '已失败', 
+    color: '#ff4d4f',
+    backgroundColor: '#fff2f0',
+    borderColor: '#ff4d4f'
+  }
 };
 
 export default function RepositoriesPage() {
@@ -47,7 +79,6 @@ export default function RepositoriesPage() {
     try {
       setLoading(true);
       const { code, data } = await getRepositoryList(page, size, keyword);
-      console.log(data);
       if (code === 200) {
         setRepositories(data.items);
         setTotal(data.total);
@@ -200,66 +231,133 @@ export default function RepositoriesPage() {
   // 表格列定义
   const columns: ColumnsType<RepositoryInfo> = [
     {
-      title: '仓库',
+      title: '仓库名称',
+      dataIndex: 'name',
       key: 'name',
-      width: 250,
-      render: (_, record) => (
-        <Space>
-          <Avatar icon={<FolderOutlined />} style={{ backgroundColor: '#87d068' }} />
-          <Tooltip title={record.address}>
-            <Link
-              style={{
-                // 隐藏多行
-                display: '-webkit-box',
-                WebkitLineClamp: 1,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                width: '120px',
-              }}
-              href={`/admin/repositories/${record.id}`}>
-              {record.address}
+      render: (text, record) => (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+            <FolderOutlined style={{ 
+              fontSize: '16px', 
+              color: '#1677ff',
+              marginRight: '8px' 
+            }} />
+            <Link href={`/admin/repositories/${record.id}`} passHref>
+              <Text strong style={{ 
+                color: '#000000',
+                textDecoration: 'none',
+                fontSize: '14px'
+              }}>
+                {record.organizationName}/{text}
+              </Text>
             </Link>
-          </Tooltip>
-          {record.isRecommended && <Tag color="gold"><StarOutlined /> 推荐</Tag>}
-        </Space>
+          </div>
+          {record.isRecommended && (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <StarOutlined style={{ 
+                fontSize: '12px', 
+                color: '#faad14',
+                marginRight: '4px' 
+              }} />
+              <Text style={{ 
+                fontSize: '12px',
+                color: '#faad14',
+                fontWeight: 500
+              }}>
+                推荐
+              </Text>
+            </div>
+          )}
+        </div>
       ),
     },
     {
       title: '描述',
       dataIndex: 'description',
       key: 'description',
-      ellipsis: true,
+      render: (text) => (
+        <Text style={{ 
+          color: '#8c8c8c',
+          fontSize: '14px'
+        }}>
+          {text || '暂无描述'}
+        </Text>
+      ),
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
       render: (status) => {
-        const { text, color } = statusMap[status as keyof typeof statusMap] || { text: '未知', color: 'default' };
-        return <Badge status={color as any} text={text} />;
+        const statusInfo = statusMap[status as keyof typeof statusMap];
+        return (
+          <Tag
+            style={{
+              color: statusInfo.color,
+              backgroundColor: statusInfo.backgroundColor,
+              border: 'none',
+              borderRadius: '4px',
+              padding: '2px 8px',
+              fontSize: '12px',
+              fontWeight: 500,
+            }}
+          >
+            {statusInfo.text}
+          </Tag>
+        );
       },
     },
     {
-      title: '类型',
-      dataIndex: 'type',
-      key: 'type',
-      render: (type) => <Tag>{type || 'git'}</Tag>,
+      title: '文档数',
+      dataIndex: 'documentCount',
+      key: 'documentCount',
+      render: (count) => (
+        <Text style={{ 
+          color: '#000000',
+          fontSize: '14px',
+          fontWeight: 500
+        }}>
+          {count || 0}
+        </Text>
+      ),
+    },
+    {
+      title: '分支',
+      dataIndex: 'branch',
+      key: 'branch',
+      render: (branch) => (
+        <Tag
+          style={{
+            color: '#1677ff',
+            backgroundColor: '#e6f4ff',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '2px 8px',
+            fontSize: '12px',
+            fontWeight: 500,
+          }}
+        >
+          {branch || 'main'}
+        </Tag>
+      ),
     },
     {
       title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (text) => (
-        <Space>
-          <ClockCircleOutlined />
-          {new Date(text).toLocaleString()}
-        </Space>
+        <Text style={{ 
+          color: '#8c8c8c',
+          fontSize: '14px'
+        }}>
+          {new Date(text).toLocaleDateString()}
+        </Text>
       ),
     },
     {
       title: '操作',
       key: 'action',
+      width: 120,
       render: (_, record) => (
         <Dropdown
           menu={{
@@ -295,7 +393,14 @@ export default function RepositoriesPage() {
             ],
           }}
         >
-          <Button type="text" icon={<MoreOutlined />} />
+          <Button 
+            type="text" 
+            icon={<MoreOutlined />}
+            style={{
+              color: '#8c8c8c',
+              borderRadius: '4px',
+            }}
+          />
         </Dropdown>
       ),
     },
@@ -303,26 +408,73 @@ export default function RepositoriesPage() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>仓库管理</h2>
+      <div style={{ marginBottom: '32px' }}>
+        <Title level={2} style={{ 
+          fontSize: '24px', 
+          fontWeight: 600, 
+          margin: 0,
+          color: '#000000'
+        }}>
+          仓库管理
+        </Title>
+        <Text style={{ 
+          fontSize: '14px', 
+          color: '#8c8c8c',
+          marginTop: '8px',
+          display: 'block'
+        }}>
+          管理 Git 仓库和文档处理状态
+        </Text>
+      </div>
 
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+      <Card style={{
+        backgroundColor: '#ffffff',
+        border: '1px solid #e8e8e8',
+        borderRadius: '8px',
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '24px' 
+        }}>
           <Space>
             <Input
-              placeholder="搜索仓库名称或地址"
+              placeholder="搜索仓库名称或描述"
               prefix={<SearchOutlined />}
-              style={{ width: 300 }}
+              style={{ 
+                width: 300,
+                borderRadius: '4px',
+                border: '1px solid #e8e8e8',
+              }}
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
               onPressEnter={handleSearch}
               allowClear
             />
-            <Button type="primary" onClick={handleSearch}>搜索</Button>
+            <Button 
+              type="primary" 
+              onClick={handleSearch}
+              style={{
+                backgroundColor: '#1677ff',
+                borderColor: '#1677ff',
+                borderRadius: '4px',
+                fontWeight: 500,
+              }}
+            >
+              搜索
+            </Button>
           </Space>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleAddRepository}
+            style={{
+              backgroundColor: '#1677ff',
+              borderColor: '#1677ff',
+              borderRadius: '4px',
+              fontWeight: 500,
+            }}
           >
             添加仓库
           </Button>
@@ -339,52 +491,93 @@ export default function RepositoriesPage() {
             total: total,
             showSizeChanger: true,
             showTotal: (total) => `共 ${total} 条记录`,
+            style: {
+              marginTop: '24px',
+            },
           }}
           onChange={handleTableChange}
+          style={{
+            borderRadius: '8px',
+          }}
         />
       </Card>
 
-      {/* 添加仓库表单 */}
+      {/* 创建仓库表单 */}
       <Modal
-        title="添加仓库"
+        title={
+          <Text strong style={{ fontSize: '16px', color: '#000000' }}>
+            添加仓库
+          </Text>
+        }
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onOk={handleFormSubmit}
         okText="创建"
         cancelText="取消"
-        width={600}
+        okButtonProps={{
+          style: {
+            backgroundColor: '#1677ff',
+            borderColor: '#1677ff',
+            borderRadius: '4px',
+            fontWeight: 500,
+          }
+        }}
+        cancelButtonProps={{
+          style: {
+            borderColor: '#e8e8e8',
+            borderRadius: '4px',
+            fontWeight: 500,
+          }
+        }}
       >
         <Form
           form={form}
           layout="vertical"
+          initialValues={{ 
+            branch: 'main',
+            enableGitAuth: false
+          }}
+          style={{ marginTop: '24px' }}
         >
           <Form.Item
             name="address"
-            label="仓库地址"
-            rules={[{ required: true, message: '请输入Git仓库地址' }]}
+            label={<Text strong style={{ color: '#000000' }}>仓库地址</Text>}
+            rules={[
+              { required: true, message: '请输入仓库地址' },
+              { type: 'url', message: '请输入有效的URL' }
+            ]}
           >
-            <Input placeholder="例如: https://github.com/username/repo.git" />
+            <Input 
+              placeholder="https://github.com/owner/repo.git"
+              style={{
+                borderRadius: '4px',
+                border: '1px solid #e8e8e8',
+              }}
+            />
           </Form.Item>
 
           <Form.Item
             name="branch"
-            label="分支"
-            help="留空将使用默认分支"
+            label={<Text strong style={{ color: '#000000' }}>分支</Text>}
+            rules={[{ required: true, message: '请输入分支名称' }]}
           >
-            <Input placeholder="例如: main, master" />
+            <Input 
+              placeholder="main"
+              style={{
+                borderRadius: '4px',
+                border: '1px solid #e8e8e8',
+              }}
+            />
           </Form.Item>
 
           <Form.Item
             name="enableGitAuth"
             valuePropName="checked"
+            label={<Text strong style={{ color: '#000000' }}>启用Git认证</Text>}
           >
-            <Select
-              placeholder="是否需要认证"
-              options={[
-                { value: true, label: '需要认证（私有仓库）' },
-                { value: false, label: '无需认证（公开仓库）' }
-              ]}
-              defaultValue={false}
+            <Switch 
+              checkedChildren="开启" 
+              unCheckedChildren="关闭"
             />
           </Form.Item>
 
@@ -392,70 +585,113 @@ export default function RepositoriesPage() {
             noStyle
             shouldUpdate={(prevValues, currentValues) => prevValues.enableGitAuth !== currentValues.enableGitAuth}
           >
-            {({ getFieldValue }) =>
-              getFieldValue('enableGitAuth') ? (
+            {({ getFieldValue }) => {
+              return getFieldValue('enableGitAuth') ? (
                 <>
                   <Form.Item
                     name="gitUserName"
-                    label="Git用户名"
+                    label={<Text strong style={{ color: '#000000' }}>Git用户名</Text>}
                     rules={[{ required: true, message: '请输入Git用户名' }]}
                   >
-                    <Input placeholder="Git用户名" />
+                    <Input 
+                      placeholder="Git用户名"
+                      style={{
+                        borderRadius: '4px',
+                        border: '1px solid #e8e8e8',
+                      }}
+                    />
                   </Form.Item>
 
                   <Form.Item
                     name="gitPassword"
-                    label="Git密码/令牌"
-                    rules={[{ required: true, message: '请输入Git密码或令牌' }]}
+                    label={<Text strong style={{ color: '#000000' }}>Git密码/Token</Text>}
+                    rules={[{ required: true, message: '请输入Git密码或Token' }]}
                   >
-                    <Input.Password placeholder="Git密码或个人访问令牌" />
+                    <Input.Password 
+                      placeholder="Git密码或Personal Access Token"
+                      style={{
+                        borderRadius: '4px',
+                        border: '1px solid #e8e8e8',
+                      }}
+                    />
                   </Form.Item>
                 </>
-              ) : null
-            }
+              ) : null;
+            }}
           </Form.Item>
         </Form>
       </Modal>
 
       {/* 编辑仓库表单 */}
       <Modal
-        title="编辑仓库"
+        title={
+          <Text strong style={{ fontSize: '16px', color: '#000000' }}>
+            编辑仓库
+          </Text>
+        }
         open={isEditModalOpen}
         onCancel={() => setIsEditModalOpen(false)}
         onOk={handleEditFormSubmit}
         okText="保存"
         cancelText="取消"
-        width={600}
+        okButtonProps={{
+          style: {
+            backgroundColor: '#1677ff',
+            borderColor: '#1677ff',
+            borderRadius: '4px',
+            fontWeight: 500,
+          }
+        }}
+        cancelButtonProps={{
+          style: {
+            borderColor: '#e8e8e8',
+            borderRadius: '4px',
+            fontWeight: 500,
+          }
+        }}
       >
         <Form
           form={editForm}
           layout="vertical"
+          style={{ marginTop: '24px' }}
         >
           <Form.Item
             name="description"
-            label="描述"
+            label={<Text strong style={{ color: '#000000' }}>描述</Text>}
           >
-            <Input.TextArea rows={4} placeholder="仓库描述" />
+            <Input.TextArea 
+              placeholder="仓库描述"
+              rows={3}
+              style={{
+                borderRadius: '4px',
+                border: '1px solid #e8e8e8',
+              }}
+            />
           </Form.Item>
 
           <Form.Item
             name="isRecommended"
-            label="是否推荐"
             valuePropName="checked"
+            label={<Text strong style={{ color: '#000000' }}>推荐仓库</Text>}
           >
-            <Select
-              options={[
-                { value: true, label: '推荐' },
-                { value: false, label: '不推荐' }
-              ]}
+            <Switch 
+              checkedChildren="推荐" 
+              unCheckedChildren="普通"
             />
           </Form.Item>
 
           <Form.Item
             name="prompt"
-            label="构建提示词"
+            label={<Text strong style={{ color: '#000000' }}>提示词</Text>}
           >
-            <Input.TextArea rows={4} placeholder="构建提示词（可选）" />
+            <Input.TextArea 
+              placeholder="自定义提示词"
+              rows={4}
+              style={{
+                borderRadius: '4px',
+                border: '1px solid #e8e8e8',
+              }}
+            />
           </Form.Item>
         </Form>
       </Modal>

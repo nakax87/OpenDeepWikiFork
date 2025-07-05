@@ -13,7 +13,6 @@ import {
   Card,
   message,
   Tooltip,
-  Steps,
   Collapse,
   Alert,
   Progress,
@@ -23,27 +22,18 @@ import {
 } from 'antd';
 import {
   HomeOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
   ApiOutlined,
   CopyOutlined,
   CheckOutlined,
-  BookOutlined,
   RocketOutlined,
   BranchesOutlined,
   GlobalOutlined,
-  BulbOutlined,
-  SearchOutlined,
-  DownloadOutlined,
-  SettingOutlined,
-  InfoCircleOutlined,
+  PartitionOutlined,
 } from '@ant-design/icons';
 import { SaveAll } from 'lucide-react'
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import AIInputBar from '../../components/AIInputBar';
-import Image from 'next/image';
 import { ExportMarkdownZip } from '../../services';
 import { useTranslation } from '../../i18n/client';
 
@@ -113,7 +103,6 @@ export default function RepositoryLayoutClient({
 }: RepositoryLayoutClientProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { token } = theme.useToken();
   const { t } = useTranslation();
 
   const pathParts = pathname.split('/').filter(Boolean);
@@ -122,20 +111,15 @@ export default function RepositoryLayoutClient({
   const [isMobile, setIsMobile] = useState(false);
   const [isMCPModalVisible, setIsMCPModalVisible] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-  
+
   // 使用URL参数中的branch，如果没有则使用从服务器传递来的currentBranch，或者使用branchs数组的第一项
   const [selectedBranch, setSelectedBranch] = useState<string>(
-    searchParams.get('branch') || 
-    initialCatalogData?.currentBranch || 
-    initialCatalogData?.branchs?.[0] || 
+    searchParams.get('branch') ||
+    initialCatalogData?.currentBranch ||
+    initialCatalogData?.branchs?.[0] ||
     ''
   );
-  
-  console.log('Client initialCatalogData:', initialCatalogData?.branchs, 'selectedBranch:', selectedBranch);
 
-  const selectedKey = pathname.includes('/') ? 'docs' : 'overview';
-
-  // Check if the screen size is mobile
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -181,7 +165,7 @@ export default function RepositoryLayoutClient({
 
       // 使用完整页面刷新以确保服务器组件重新渲染并获取新数据
       window.location.href = `${pathname}?${params.toString()}`;
-      
+
       // 不再需要设置状态，因为页面会完全刷新
       // setSelectedBranch(value);
     }
@@ -225,8 +209,8 @@ export default function RepositoryLayoutClient({
     return (
       <div key={item.key} className="tree-item-container">
         {item.disabled ? (
-          <div 
-            className="tree-item disabled" 
+          <div
+            className="tree-item disabled"
             style={{ paddingLeft: `${12 + indentLevel}px` }}
           >
             <span className="tree-item-label">{item.label}</span>
@@ -247,7 +231,7 @@ export default function RepositoryLayoutClient({
             </span>
           </Link>
         )}
-        
+
         {/* 渲染子项 */}
         {item.children?.length > 0 && (
           <div className="tree-children">
@@ -364,19 +348,20 @@ export default function RepositoryLayoutClient({
                   color: minimalistDesign.colors.text,
                 }}
               >
-                <span
-                  onClick={() => {
-                    if (initialCatalogData?.git) {
-                      window.open(initialCatalogData.git, '_blank');
-                    }
-                  }}
-                  style={{
-                    cursor: 'pointer',
-                  }}>
-                  {owner}/{name}
-                </span>
+                {!isMobile && (
+                  <span
+                    onClick={() => {
+                      if (initialCatalogData?.git) {
+                        window.open(initialCatalogData.git, '_blank');
+                      }
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                    }}>
+                    {owner}/{name}
+                  </span>)}
               </Typography.Title>
-              
+
               {initialCatalogData?.progress !== undefined && initialCatalogData?.progress < 100 && (
                 <Flex align="center" gap={minimalistDesign.spacing.sm}>
                   <Progress
@@ -401,9 +386,9 @@ export default function RepositoryLayoutClient({
                   onChange={handleBranchChange}
                   style={{ width: isMobile ? 100 : 140 }}
                   size={isMobile ? "small" : "middle"}
-                  options={initialCatalogData.branchs.map((branch: string) => ({ 
-                    label: branch, 
-                    value: branch 
+                  options={initialCatalogData.branchs.map((branch: string) => ({
+                    label: branch,
+                    value: branch
                   }))}
                   placeholder={t('repository_layout.branch.select_placeholder')}
                   suffixIcon={<BranchesOutlined />}
@@ -424,7 +409,7 @@ export default function RepositoryLayoutClient({
               >
                 {isMobile ? 'MCP' : t('repository_layout.header.add_mcp')}
               </Button>
-              
+
               {initialLastUpdated && !isMobile && (
                 <Text style={{
                   fontSize: 12,
@@ -436,7 +421,7 @@ export default function RepositoryLayoutClient({
             </Flex>
           </Flex>
         </Header>
-        
+
         <Modal
           title={
             <Flex align="center" gap={minimalistDesign.spacing.sm}>
@@ -461,8 +446,8 @@ export default function RepositoryLayoutClient({
                   <li>{t('repository_layout.mcp.features.analysis')}</li>
                 </ul>
               }
-              style={{ 
-                marginBottom: minimalistDesign.spacing.lg, 
+              style={{
+                marginBottom: minimalistDesign.spacing.lg,
                 borderRadius: minimalistDesign.borderRadius.lg,
                 border: `1px solid ${minimalistDesign.colors.border}`
               }}
@@ -644,6 +629,17 @@ export default function RepositoryLayoutClient({
                   <span className="tree-item-label">{t('repository_layout.sidebar.overview')}</span>
                 </Link>
 
+                <Link
+                  href={selectedBranch ? `/${owner}/${name}/mindmap?branch=${selectedBranch}` : `/${owner}/${name}/mindmap`}
+                  className={`tree-item mindmap-item ${pathname === `/${owner}/${name}/mindmap` ? 'active' : ''}`}
+                  style={{ paddingLeft: '12px' }}
+                >
+                  <span className="tree-item-label">
+                    <PartitionOutlined style={{ marginRight: '8px', fontSize: '14px' }} />
+                    {t('repository_layout.sidebar.mindmap')}
+                  </span>
+                </Link>
+
                 <div className="menu-divider"></div>
 
                 {initialCatalogData?.items?.map(item => renderSidebarItem(item))}
@@ -702,15 +698,15 @@ export default function RepositoryLayoutClient({
           borderTop: `1px solid ${minimalistDesign.colors.border}`,
         }}>
           <Space direction="vertical" size={minimalistDesign.spacing.xs}>
-            <Text style={{ 
-              fontSize: 12, 
-              color: minimalistDesign.colors.textSecondary 
+            <Text style={{
+              fontSize: 12,
+              color: minimalistDesign.colors.textSecondary
             }}>
               Powered by <Text style={{ color: minimalistDesign.colors.primary, fontWeight: 500 }}>OpenDeepWiki</Text>
             </Text>
-            <Text style={{ 
-              fontSize: 12, 
-              color: minimalistDesign.colors.textTertiary 
+            <Text style={{
+              fontSize: 12,
+              color: minimalistDesign.colors.textTertiary
             }}>
               <GlobalOutlined style={{ marginRight: 4 }} /> Powered by .NET 9.0
             </Text>
@@ -793,8 +789,9 @@ export default function RepositoryLayoutClient({
           opacity: 1;
         }
         
-        /* 概览和更新日志的特殊样式 */
+        /* 概览、思维导图和更新日志的特殊样式 */
         .tree-item.overview-item,
+        .tree-item.mindmap-item,
         .tree-item.changelog-item {
           font-weight: 500;
           margin: 4px 8px 8px 8px;
@@ -803,11 +800,13 @@ export default function RepositoryLayoutClient({
         }
         
         .tree-item.overview-item:hover,
+        .tree-item.mindmap-item:hover,
         .tree-item.changelog-item:hover {
           background-color: #e2e8f0;
         }
         
         .tree-item.overview-item.active,
+        .tree-item.mindmap-item.active,
         .tree-item.changelog-item.active {
           background-color: #dbeafe;
           border-color: ${minimalistDesign.colors.primary};
@@ -866,30 +865,6 @@ export default function RepositoryLayoutClient({
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
       `}</style>
-
-      {
-        initialCatalogData?.items?.length > 0 && (
-          <AIInputBar
-            owner={owner}
-            name={name}
-            branch={selectedBranch}
-            style={{
-              position: 'fixed',
-              bottom: minimalistDesign.spacing.lg,
-              left: 0,
-              right: 0,
-              margin: '0 auto',
-              maxWidth: isMobile ? '90%' : '60%',
-              width: isMobile ? 'calc(100% - 32px)' : 'auto',
-              zIndex: 1001,
-              boxShadow: minimalistDesign.shadows.lg,
-              borderRadius: minimalistDesign.borderRadius.lg,
-              backdropFilter: 'blur(8px)',
-              border: `1px solid ${minimalistDesign.colors.border}`,
-            }}
-          />
-        )
-      }
     </ConfigProvider >
   );
 }

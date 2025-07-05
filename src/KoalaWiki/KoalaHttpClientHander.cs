@@ -17,43 +17,33 @@ public sealed class KoalaHttpClientHandler : HttpClientHandler
 
         var model = $"{json.model}";
 
-        // GPT o系列不能传递温度,并且使用max_completion_tokens
-        if (model.StartsWith("o"))
-        {
-            json.temperature = null;
-        }
-
-        // 增加max_token，从max_completion_tokens读取
+        // 兼容旧模型 ( max_completion_tokens => max_tokens )
         if (json != null && json.max_completion_tokens != null && model.StartsWith("o") == false)
         {
-            var maxToken = json.max_completion_tokens;
-            if (maxToken != null)
-            {
-                json.max_tokens = maxToken;
-                json.max_completion_tokens = null;
-            }
-
-            if (model.StartsWith("qwen3", StringComparison.CurrentCultureIgnoreCase))
-            {
-                // 关闭推理模式
-                json.enable_thinking = false;
-            }
-
-            // 重写请求体
-            request.Content = new StringContent(JsonConvert.SerializeObject(json),
-                System.Text.Encoding.UTF8, "application/json");
+            json.max_tokens = json.max_completion_tokens;
+            json.Remove("max_completion_tokens");
         }
-        else
+
+        // GPT o系列不能传递温度
+        if (model.StartsWith("o"))
         {
-            if (model.StartsWith("qwen3", StringComparison.CurrentCultureIgnoreCase))
-            {
-                // 关闭推理模式
-                json.enable_thinking = false;
-                // 重写请求体
-                request.Content = new StringContent(JsonConvert.SerializeObject(json),
-                    System.Text.Encoding.UTF8, "application/json");
-            }
+            json.Remove("temperature");
         }
+
+        // 关闭推理模式: qwen3系列
+        if (model.StartsWith("qwen3", StringComparison.CurrentCultureIgnoreCase))
+        {
+            if (json.extra_body == null)
+            {
+                json.extra_body = new Newtonsoft.Json.Linq.JObject();
+            }
+
+            json.extra_body.enable_thinking = false;
+        }
+
+        // 重写请求体
+        request.Content = new StringContent(JsonConvert.SerializeObject(json),
+            System.Text.Encoding.UTF8, "application/json");
 
         // 1. 启动计时
         var stopwatch = Stopwatch.StartNew();

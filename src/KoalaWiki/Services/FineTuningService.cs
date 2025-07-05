@@ -19,7 +19,8 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace KoalaWiki.Services;
 
-[Tags("FineTuning")]
+[Tags("微调管理")]
+[Route("/api/FineTuning")]
 [Authorize]
 public class FineTuningService(IKoalaWikiContext koala, IUserContext userContext) : FastApi
 {
@@ -304,7 +305,7 @@ public class FineTuningService(IKoalaWikiContext koala, IUserContext userContext
             await foreach (var item in chat.GetStreamingChatMessageContentsAsync(history,
                                new OpenAIPromptExecutionSettings()
                                {
-                                   MaxTokens = DocumentsService.GetMaxTokens(dataset.Model),
+                                   MaxTokens = DocumentsHelper.GetMaxTokens(dataset.Model),
                                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
                                    Temperature = 0.3,
                                }, kernel))

@@ -22,35 +22,26 @@ public class OverviewService
         var settings = new OpenAIPromptExecutionSettings()
         {
             ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-            MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.ChatModel)
+            MaxTokens = DocumentsHelper.GetMaxTokens(OpenAIOptions.ChatModel)
         };
 
         var chat = kernel.GetRequiredService<IChatCompletionService>();
         var history = new ChatHistory();
 
-        string prompt = string.Empty;
+        string promptName = nameof(PromptConstant.Warehouse.Overview);
         if (classify.HasValue)
         {
-            prompt = await PromptContext.Warehouse(nameof(PromptConstant.Warehouse.Overview) + classify,
-                new KernelArguments()
-                {
-                    ["catalogue"] = catalog,
-                    ["git_repository"] = gitRepository.Replace(".git", ""),
-                    ["branch"] = readme,
-                    ["readme"] = branch
-                },OpenAIOptions.ChatModel);
+            promptName += classify;
         }
-        else
-        {
-            prompt = await PromptContext.Warehouse(nameof(PromptConstant.Warehouse.Overview),
-                new KernelArguments()
-                {
-                    ["catalogue"] = catalog,
-                    ["git_repository"] = gitRepository.Replace(".git", ""),
-                    ["branch"] = branch,
-                    ["readme"] = readme
-                },OpenAIOptions.ChatModel);
-        }
+
+        string prompt = await PromptContext.Warehouse(promptName,
+            new KernelArguments(settings)
+            {
+                ["catalogue"] = catalog,
+                ["git_repository"] = gitRepository.Replace(".git", ""),
+                ["branch"] = branch,
+                ["readme"] = readme
+            }, OpenAIOptions.ChatModel);
 
         history.AddUserMessage(prompt);
 

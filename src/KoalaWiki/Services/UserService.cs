@@ -15,7 +15,8 @@ namespace KoalaWiki.Services;
 /// <summary>
 /// 用户管理服务
 /// </summary>
-[Tags("User")]
+[Tags("用户管理")]
+[Route("/api/user")]
 [Filter(typeof(ResultFilter))]
 public class UserService(
     IKoalaWikiContext dbContext,
@@ -30,6 +31,7 @@ public class UserService(
     /// <param name="keyword">搜索关键词</param>
     /// <returns>用户列表</returns>
     [Authorize(Roles = "admin")]
+    [EndpointSummary("获取用户列表")]
     public async Task<PageDto<UserInfoDto>> GetUserListAsync(int page, int pageSize, string? keyword)
     {
         var query = dbContext.Users.AsNoTracking();
@@ -64,6 +66,7 @@ public class UserService(
     /// <param name="id">用户ID</param>
     /// <returns>用户详情</returns>
     [Authorize(Roles = "admin")]
+    [EndpointSummary("获取用户详情")]
     public async Task<ResultDto<UserInfoDto>> GetUserAsync(string id)
     {
         var user = await dbContext.Users
@@ -72,7 +75,7 @@ public class UserService(
 
         if (user == null)
         {
-            return ResultDto<UserInfoDto>.Fail("用户不存在");
+            return ResultDto<UserInfoDto>.Error("用户不存在");
         }
 
         // 将实体映射为DTO
@@ -86,12 +89,13 @@ public class UserService(
     /// </summary>
     /// <returns>当前用户信息</returns>
     [Authorize]
+    [EndpointSummary("获取当前用户信息")]
     public async Task<ResultDto<UserInfoDto>> GetCurrentUserAsync()
     {
         var userId = userContext.CurrentUserId;
         if (string.IsNullOrEmpty(userId))
         {
-            return ResultDto<UserInfoDto>.Fail("用户未登录");
+            return ResultDto<UserInfoDto>.Error("用户未登录");
         }
 
         var user = await dbContext.Users
@@ -100,12 +104,23 @@ public class UserService(
 
         if (user == null)
         {
-            return ResultDto<UserInfoDto>.Fail("用户不存在");
+            return ResultDto<UserInfoDto>.Error("用户不存在");
         }
 
         // 将实体映射为DTO
         var userDto = user.Adapt<UserInfoDto>();
 
+        var roleIds = await dbContext.UserInRoles
+            .Where(ur => ur.UserId == userId)
+            .Select(ur => ur.RoleId)
+            .ToListAsync();
+
+        var roles = await dbContext.Roles
+            .Where(r => roleIds.Contains(r.Id))
+            .Select(r => r.Name)
+            .ToListAsync();
+
+        userDto.Role = string.Join(',', roles);
         return ResultDto<UserInfoDto>.Success(userDto);
     }
 
@@ -115,6 +130,7 @@ public class UserService(
     /// <param name="updateProfileDto">用户资料信息</param>
     /// <returns>更新结果</returns>
     [Authorize]
+    [EndpointSummary("更新用户资料")]
     public async Task<ResultDto<UserInfoDto>> UpdateProfileAsync(UpdateProfileDto updateProfileDto)
     {
         try
@@ -122,13 +138,13 @@ public class UserService(
             var userId = userContext.CurrentUserId;
             if (string.IsNullOrEmpty(userId))
             {
-                return ResultDto<UserInfoDto>.Fail("用户未登录");
+                return ResultDto<UserInfoDto>.Error("用户未登录");
             }
 
             var existingUser = await dbContext.Users.FindAsync(userId);
             if (existingUser == null)
             {
-                return ResultDto<UserInfoDto>.Fail("用户不存在");
+                return ResultDto<UserInfoDto>.Error("用户不存在");
             }
 
             // 如果修改了用户名，检查是否已存在
@@ -138,7 +154,7 @@ public class UserService(
                     await dbContext.Users.AnyAsync(u => u.Name == updateProfileDto.Name && u.Id != userId);
                 if (existingUsername)
                 {
-                    return ResultDto<UserInfoDto>.Fail("用户名已存在");
+                    return ResultDto<UserInfoDto>.Error("用户名已存在");
                 }
             }
 
@@ -149,7 +165,7 @@ public class UserService(
                     await dbContext.Users.AnyAsync(u => u.Email == updateProfileDto.Email && u.Id != userId);
                 if (existingEmail)
                 {
-                    return ResultDto<UserInfoDto>.Fail("邮箱已被注册");
+                    return ResultDto<UserInfoDto>.Error("邮箱已被注册");
                 }
             }
 
@@ -171,7 +187,7 @@ public class UserService(
         catch (Exception ex)
         {
             logger.LogError(ex, "更新用户资料失败");
-            return ResultDto<UserInfoDto>.Fail("更新用户资料失败，请稍后再试");
+            return ResultDto<UserInfoDto>.Error("更新用户资料失败，请稍后再试");
         }
     }
 
@@ -181,14 +197,15 @@ public class UserService(
     /// <param name="verifyPasswordDto">密码验证信息</param>
     /// <returns>验证结果</returns>
     [Authorize]
-    public async Task<ResultDto<bool>> VerifyPasswordAsync(VerifyPasswordDto verifyPasswordDto)
+    [EndpointSummary("验证当前密码")]
+    public async Task<ResultDto> VerifyPasswordAsync(VerifyPasswordDto verifyPasswordDto)
     {
         try
         {
             var userId = userContext.CurrentUserId;
             if (string.IsNullOrEmpty(userId))
             {
-                return ResultDto<bool>.Fail("用户未登录");
+                return ResultDto<bool>.Error("用户未登录");
             }
 
             var user = await dbContext.Users
@@ -197,7 +214,7 @@ public class UserService(
 
             if (user == null)
             {
-                return ResultDto<bool>.Fail("用户不存在");
+                return ResultDto<bool>.Error("用户不存在");
             }
 
             // 这里应该使用密码哈希验证，暂时使用简单比较
@@ -209,7 +226,7 @@ public class UserService(
         catch (Exception ex)
         {
             logger.LogError(ex, "验证密码失败");
-            return ResultDto<bool>.Fail("验证密码失败，请稍后再试");
+            return ResultDto<bool>.Error("验证密码失败，请稍后再试");
         }
     }
 
@@ -219,28 +236,29 @@ public class UserService(
     /// <param name="changePasswordDto">修改密码信息</param>
     /// <returns>修改结果</returns>
     [Authorize]
-    public async Task<ResultDto<bool>> ChangePasswordAsync(ChangePasswordDto changePasswordDto)
+    [EndpointSummary("修改密码")]
+    public async Task<ResultDto> ChangePasswordAsync(ChangePasswordDto changePasswordDto)
     {
         try
         {
             var userId = userContext.CurrentUserId;
             if (string.IsNullOrEmpty(userId))
             {
-                return ResultDto<bool>.Fail("用户未登录");
+                return ResultDto<bool>.Error("用户未登录");
             }
 
             var existingUser = await dbContext.Users.FindAsync(userId);
             if (existingUser == null)
             {
-                return ResultDto<bool>.Fail("用户不存在");
+                return ResultDto<bool>.Error("用户不存在");
             }
 
             // 验证当前密码
-            // 这里应该使用密码哈希验证，暂时使用简单比较
+            // 这���应该使用密码哈希验证，暂时使用简单比较
             // 在实际项目中，应该使用 BCrypt 或其他安全的密码哈希算法
             if (existingUser.Password != changePasswordDto.CurrentPassword)
             {
-                return ResultDto<bool>.Fail("当前密码不正确");
+                return ResultDto<bool>.Error("当前密码不正确");
             }
 
             // 更新密码
@@ -256,7 +274,7 @@ public class UserService(
         catch (Exception ex)
         {
             logger.LogError(ex, "修改密码失败");
-            return ResultDto<bool>.Fail("修改密码失败，请稍后再试");
+            return ResultDto<bool>.Error("修改密码失败，请稍后再试");
         }
     }
 
@@ -266,6 +284,7 @@ public class UserService(
     /// <param name="file">头像文件</param>
     /// <returns>头像URL</returns>
     [Authorize]
+    [EndpointSummary("上传头像")]
     public async Task<ResultDto<string>> UploadAvatarAsync(HttpContext context)
     {
         try
@@ -273,7 +292,7 @@ public class UserService(
             var userId = userContext.CurrentUserId;
             if (string.IsNullOrEmpty(userId))
             {
-                return ResultDto<string>.Fail("用户未登录");
+                return ResultDto<string>.Error("用户未登录");
             }
 
             var file = context.Request.Form.Files.FirstOrDefault();
@@ -281,7 +300,7 @@ public class UserService(
             // 验证文件
             if (file == null || file.Length == 0)
             {
-                return ResultDto<string>.Fail("请选择要上传的文件");
+                return ResultDto<string>.Error("请选择要上传的文件");
             }
 
             // 验证文件类型
@@ -289,13 +308,13 @@ public class UserService(
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!allowedExtensions.Contains(fileExtension))
             {
-                return ResultDto<string>.Fail("只支持 JPG、PNG、GIF 格式的图片");
+                return ResultDto<string>.Error("只支持 JPG、PNG、GIF 格式的图片");
             }
 
             // 验证文件大小（限制为2MB）
             if (file.Length > 2 * 1024 * 1024)
             {
-                return ResultDto<string>.Fail("文件大小不能超过 2MB");
+                return ResultDto<string>.Error("文件大小不能超过 2MB");
             }
 
             // 创建头像目录
@@ -349,7 +368,7 @@ public class UserService(
         catch (Exception ex)
         {
             logger.LogError(ex, "上传头像失败");
-            return ResultDto<string>.Fail("上传头像失败，请稍后再试");
+            return ResultDto<string>.Error("上传头像失败，请稍后再试");
         }
     }
 
@@ -359,6 +378,7 @@ public class UserService(
     /// <param name="createUserDto">用户信息</param>
     /// <returns>创建结果</returns>
     [Authorize(Roles = "admin")]
+    [EndpointSummary("创建用户")]
     public async Task<ResultDto<UserInfoDto>> CreateUserAsync(CreateUserDto createUserDto)
     {
         try
@@ -367,14 +387,14 @@ public class UserService(
             var existingUsername = await dbContext.Users.AnyAsync(u => u.Name == createUserDto.Name);
             if (existingUsername)
             {
-                return ResultDto<UserInfoDto>.Fail("用户名已存在");
+                return ResultDto<UserInfoDto>.Error("用户名已存在");
             }
 
             // 检查邮箱是否已存在
             var existingEmail = await dbContext.Users.AnyAsync(u => u.Email == createUserDto.Email);
             if (existingEmail)
             {
-                return ResultDto<UserInfoDto>.Fail("邮箱已被注册");
+                return ResultDto<UserInfoDto>.Error("邮箱已被注册");
             }
 
             // 将DTO映射为实体
@@ -384,10 +404,20 @@ public class UserService(
                 Name = createUserDto.Name,
                 Email = createUserDto.Email,
                 Password = createUserDto.Password,
-                Role = createUserDto.Role,
                 Avatar = createUserDto.Avatar ?? string.Empty,
                 CreatedAt = DateTime.UtcNow
             };
+
+            // 获取普通角色
+            var userRole = await dbContext.Roles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Name == "user");
+
+            await dbContext.UserInRoles.AddAsync(new UserInRole()
+            {
+                RoleId = userRole.Id,
+                UserId = user.Id
+            });
 
             // 保存用户
             await dbContext.Users.AddAsync(user);
@@ -401,7 +431,7 @@ public class UserService(
         catch (Exception ex)
         {
             logger.LogError(ex, "创建用户失败");
-            return ResultDto<UserInfoDto>.Fail("创建用户失败，请稍后再试");
+            return ResultDto<UserInfoDto>.Error("创建用户失败，请稍后再试");
         }
     }
 
@@ -412,6 +442,7 @@ public class UserService(
     /// <param name="updateUserDto">用户信息</param>
     /// <returns>更新结果</returns>
     [Authorize(Roles = "admin")]
+    [EndpointSummary("更新用户")]
     public async Task<ResultDto<UserInfoDto>> UpdateUserAsync(string id, UpdateUserDto updateUserDto)
     {
         try
@@ -419,7 +450,7 @@ public class UserService(
             var existingUser = await dbContext.Users.FindAsync(id);
             if (existingUser == null)
             {
-                return ResultDto<UserInfoDto>.Fail("用户不存在");
+                return ResultDto<UserInfoDto>.Error("用户不存在");
             }
 
             // 如果修改了用户名，检查是否已存在
@@ -428,7 +459,7 @@ public class UserService(
                 var existingUsername = await dbContext.Users.AnyAsync(u => u.Name == updateUserDto.Name && u.Id != id);
                 if (existingUsername)
                 {
-                    return ResultDto<UserInfoDto>.Fail("用户名已存在");
+                    return ResultDto<UserInfoDto>.Error("用户名已存在");
                 }
             }
 
@@ -438,14 +469,13 @@ public class UserService(
                 var existingEmail = await dbContext.Users.AnyAsync(u => u.Email == updateUserDto.Email && u.Id != id);
                 if (existingEmail)
                 {
-                    return ResultDto<UserInfoDto>.Fail("邮箱已被注册");
+                    return ResultDto<UserInfoDto>.Error("邮箱已被注册");
                 }
             }
 
             // 更新用户信息
             existingUser.Name = updateUserDto.Name;
             existingUser.Email = updateUserDto.Email;
-            existingUser.Role = updateUserDto.Role;
             existingUser.Avatar = updateUserDto.Avatar ?? existingUser.Avatar;
             existingUser.UpdatedAt = DateTime.UtcNow;
 
@@ -467,36 +497,35 @@ public class UserService(
         catch (Exception ex)
         {
             logger.LogError(ex, "更新用户失败");
-            return ResultDto<UserInfoDto>.Fail("更新用户失败，请稍后再试");
+            return ResultDto<UserInfoDto>.Error("更新用户失败，请稍后再试");
         }
     }
 
     /// <summary>
     /// 删除用户
     /// </summary>
-    /// <param name="id">用户ID</param>
-    /// <returns>删除结果</returns>
     [Authorize(Roles = "admin")]
-    public async Task<ResultDto<bool>> DeleteUserAsync(string id)
+    [EndpointSummary("删除用户")]
+    public async Task<ResultDto> DeleteUserAsync(string id)
     {
         try
         {
             var user = await dbContext.Users.FindAsync(id);
             if (user == null)
             {
-                return ResultDto<bool>.Fail("用户不存在");
+                return ResultDto.Error("用户不存在");
             }
 
             // 删除用户
             dbContext.Users.Remove(user);
             await dbContext.SaveChangesAsync();
 
-            return ResultDto<bool>.Success(true);
+            return ResultDto.Success(true);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "删除用户失败");
-            return ResultDto<bool>.Fail("删除用户失败，请稍后再试");
+            return ResultDto.Error("删除用户失败，请稍后再试");
         }
     }
 }

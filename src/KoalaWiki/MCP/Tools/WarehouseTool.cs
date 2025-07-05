@@ -14,6 +14,13 @@ namespace KoalaWiki.MCP.Tools;
 
 public sealed class WarehouseTool(IKoalaWikiContext koala)
 {
+    /// <summary>
+    /// 生成仓库文档
+    /// </summary>
+    /// <param name="server"></param>
+    /// <param name="question"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<string> GenerateDocumentAsync(
         IMcpServer server,
         string question)
@@ -65,10 +72,10 @@ public sealed class WarehouseTool(IKoalaWikiContext koala)
         var fileKernel = KernelFactory.GetKernel(OpenAIOptions.Endpoint,
             OpenAIOptions.ChatApiKey, path, OpenAIOptions.DeepResearchModel, false);
 
-        if (!string.IsNullOrWhiteSpace(OpenAIOptions.EmbeddingsModel))
-        {
-            fileKernel.Plugins.AddFromObject(new RagFunction(warehouse.Id));
-        }
+        // if (!string.IsNullOrWhiteSpace(OpenAIOptions.EmbeddingsModel))
+        // {
+        //     fileKernel.Plugins.AddFromObject(new RagFunction(warehouse.Id));
+        // }
 
         var history = new ChatHistory();
 
@@ -107,7 +114,7 @@ public sealed class WarehouseTool(IKoalaWikiContext koala)
                                new OpenAIPromptExecutionSettings()
                                {
                                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                                   MaxTokens = DocumentsService.GetMaxTokens(OpenAIOptions.ChatModel),
+                                   MaxTokens = DocumentsHelper.GetMaxTokens(OpenAIOptions.ChatModel),
                                    Temperature = 0.5
                                }, fileKernel))
             {
