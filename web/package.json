@@ -2,7 +2,8 @@
   "homepage": "https://github.com/AIDotNet/OpenDeepWiki",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && npm run build:widget",
+    "build:widget": "node widget-build.js",
     "start": "next start",
     "lint": "next lint"
   },
@@ -53,6 +54,7 @@
     "@types/node": "22.15.2",
     "@types/react": "19.1.2",
     "autoprefixer": "^10.4.21",
+    "esbuild": "^0.20.2",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.7",
     "typescript": "5.8.3"
