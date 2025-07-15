@@ -82,10 +82,8 @@ public static class KernelFactory
             // AWS Bedrockリージョンの設定
             var awsRegion = RegionEndpoint.GetBySystemName(OpenAIOptions.AwsRegion);
             // AWS Bedrockクライアントの作成
-            var bedrockClient = new AmazonBedrockRuntimeClient(
-                OpenAIOptions.AwsAccessKeyId,
-                OpenAIOptions.AwsSecretAccessKey,
-                awsRegion);
+            // アクセスキー／シークレットキー不要
+            var bedrockClient = new AmazonBedrockRuntimeClient(awsRegion);
 
             // Amazon Bedrock ChatCompletionをカーネルに追加
             kernelBuilder.AddBedrockChatCompletionService(model, bedrockClient);

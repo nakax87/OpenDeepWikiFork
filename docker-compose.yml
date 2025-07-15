@@ -14,8 +14,6 @@
       - MODEL_PROVIDER=OpenAI # モデルプロバイダー: OpenAI, AzureOpenAI, Anthropic, AmazonBedrock
       # Amazon Bedrock設定（MODEL_PROVIDER=AmazonBedrockの場合に使用）
       - AWS_REGION= # AWSリージョン (例: us-east-1, ap-northeast-1)
-      - AWS_ACCESS_KEY_ID= # AWSアクセスキーID
-      - AWS_SECRET_ACCESS_KEY= # AWSシークレットアクセスキー
       - DB_TYPE=sqlite
       - DB_CONNECTION_STRING=Data Source=/data/KoalaWiki.db
       - UPDATE_INTERVAL=5 # 仓库增量更新间隔，单位天

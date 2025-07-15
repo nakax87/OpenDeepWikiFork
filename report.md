@@ -99,13 +99,13 @@ public static Kernel GetKernel(string chatEndpoint, string apiKey, string gitPat
 - `EmbeddingsModel`: 埋め込み用モデル
 - `Endpoint`: APIエンドポイント
 - `ChatApiKey`: API認証キー
-- `AwsRegion`, `AwsAccessKeyId`, `AwsSecretAccessKey`: AWS Bedrock用設定
+- `AwsRegion`: AWS Bedrock用設定
 
 ### 4.2 設定検証
 
 プロバイダー別の必須パラメータ検証：
 - **Amazon Bedrock以外**: `ChatApiKey`と`Endpoint`が必須
-- **Amazon Bedrock**: AWS認証情報（Region、AccessKeyId、SecretAccessKey）が必須
+- **Amazon Bedrock**: AWS認証情報（Region）が必須、アクセスキー、シークレットキーは不要
 
 ### 4.3 ヘルパーメソッド
 

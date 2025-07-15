@@ -49,17 +49,6 @@ public class OpenAIOptions
     /// AWSリージョン
     /// </summary>
     public static string AwsRegion { get; set; } = string.Empty;
-    
-    /// <summary>
-    /// AWSアクセスキーID
-    /// </summary>
-    public static string AwsAccessKeyId { get; set; } = string.Empty;
-    
-    /// <summary>
-    /// AWSシークレットアクセスキー
-    /// </summary>
-    public static string AwsSecretAccessKey { get; set; } = string.Empty;
-
     public static void InitConfig(IConfiguration configuration)
     {
         ChatModel = (configuration.GetValue<string>("CHAT_MODEL") ??
@@ -86,12 +75,6 @@ public class OpenAIOptions
         AwsRegion = (configuration.GetValue<string>("AWS_REGION") ??
                      configuration.GetValue<string>("AwsRegion")).GetTrimmedValueOrEmpty();
         
-        AwsAccessKeyId = (configuration.GetValue<string>("AWS_ACCESS_KEY_ID") ??
-                          configuration.GetValue<string>("AwsAccessKeyId")).GetTrimmedValueOrEmpty();
-        
-        AwsSecretAccessKey = (configuration.GetValue<string>("AWS_SECRET_ACCESS_KEY") ??
-                              configuration.GetValue<string>("AwsSecretAccessKey")).GetTrimmedValueOrEmpty();
-
         // EnableIncrementalUpdate
         var enableIncrementalUpdate = configuration.GetValue<bool>("ENABLE_INCREMENTAL_UPDATE", false);
         DocumentOptions.EnableIncrementalUpdate = enableIncrementalUpdate;
@@ -110,8 +93,6 @@ public class OpenAIOptions
         if (isAmazonBedrock)
         {
             ValidateRequiredParameter(AwsRegion, "AWS_REGION");
-            ValidateRequiredParameter(AwsAccessKeyId, "AWS_ACCESS_KEY_ID");
-            ValidateRequiredParameter(AwsSecretAccessKey, "AWS_SECRET_ACCESS_KEY");
         }
         else
         {
